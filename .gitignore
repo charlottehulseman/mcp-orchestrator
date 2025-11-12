@@ -3,6 +3,10 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Database
+/data
+/data_backup
+
 # C extensions
 *.so
 
@@ -143,6 +147,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.streamlit/secrets.toml
 
 # Spyder project settings
 .spyderproject

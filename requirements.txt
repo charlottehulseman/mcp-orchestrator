@@ -1,0 +1,27 @@
+# Boxing Intelligence Platform - Complete Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core MCP Framework
+mcp>=1.0.0
+
+# LangChain Integration (Required for multi-server orchestration)
+langchain-mcp-adapters>=0.1.0
+langchain-anthropic>=0.3.0
+langchain-core>=0.3.0
+
+# Async HTTP Client (for Odds API integration)
+aiohttp>=3.9.0
+
+# Data Processing
+pandas>=2.0.0
+
+# HTTP Server Support (for stdio servers, lightweight)
+uvicorn>=0.27.0
+starlette>=0.36.0
+
+streamlit>=1.51.0
+praw>=7.8.1
+
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
