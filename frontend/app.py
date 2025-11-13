@@ -412,9 +412,9 @@ def get_server_for_tool(tool_name: str) -> str:
     return "Unknown"
 
 
-# -------------------- Examples helpers --------------------
+# --- Examples helpers ---
 def _set_query_from_example(text: str, input_key: str):
-    # set session value; text_input will read it (no 'value=' passed)
+    # pre-seed the current input widget (created later) before it mounts
     st.session_state[input_key] = text
 
 EXAMPLES = [
@@ -432,8 +432,10 @@ def render_example_cards(input_key: str):
     st.markdown('<div class="examples-wrap examples-sticky">', unsafe_allow_html=True)
     st.markdown('<div class="examples-title">Examples</div>', unsafe_allow_html=True)
     for i, q in enumerate(EXAMPLES):
-        st.button(q, key=f"example_{i}", use_container_width=True,
-                  on_click=_set_query_from_example, args=(q, input_key))
+        st.button(
+            q, key=f"example_{i}", use_container_width=True,
+            on_click=_set_query_from_example, args=(q, input_key)
+        )
     st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -441,15 +443,15 @@ def render_example_cards(input_key: str):
 def show_main_app():
     inject_main_css()
 
-    # ensure chat history exists
+
+    # chat history
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
 
-    # handle clear-on-click BEFORE rendering any widgets
-    if st.session_state.pop("_clear_query", False):
-        # remove the key to avoid "modified after instantiation" errors
-        st.session_state.pop("query_input_chat", None)
-        st.rerun()
+    # seed to force remount of the input after submit
+    if "input_seed" not in st.session_state:
+        st.session_state["input_seed"] = 0
+    current_key = f"query_input_chat_{st.session_state['input_seed']}"
 
     display_server_status()
     display_metrics()
@@ -485,7 +487,8 @@ def show_main_app():
     left, right = st.columns([2, 6], gap="large")
 
     with left:
-        render_example_cards(input_key="query_input_chat")
+        render_example_cards(input_key=current_key)
+
 
     with right:
         st.markdown('<div class="chat-area">', unsafe_allow_html=True)
@@ -532,32 +535,35 @@ def show_main_app():
             query = st.text_input(
                 "Query",
                 placeholder="Ask about fighters, odds, news, or community sentiment...",
-                key="query_input_chat",
+                key=current_key,                    # <-- dynamic key mounts a fresh widget each time
                 label_visibility="collapsed",
             )
         with c2:
             submit = st.button("ANALYZE", type="primary")
 
-        if submit and query:
-            # append user
-            st.session_state["chat_history"].append({"role": "user", "content": query})
-            try:
-                response, tool_calls, duration = asyncio.run(
-                    process_query(query, agent, tool_map)
-                )
-                st.session_state["chat_history"].append({
-                    "role": "assistant",
-                    "content": response,
-                    "tool_calls": tool_calls,
-                    "duration": duration,
-                })
-                # schedule clearing input on next run (safe)
-                st.session_state["_clear_query"] = True
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error: {e}")
+        if submit:
+            q = st.session_state.get(current_key, "").strip()
+            if q:
+                # append user
+                st.session_state["chat_history"].append({"role": "user", "content": q})
+                try:
+                    response, tool_calls, duration = asyncio.run(
+                        process_query(q, agent, tool_map)
+                    )
+                    st.session_state["chat_history"].append({
+                        "role": "assistant",
+                        "content": response,
+                        "tool_calls": tool_calls,
+                        "duration": duration,
+                    })
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
-        st.markdown("</div>", unsafe_allow_html=True)  # end .chat-input-section
+            # force the input to remount blank on next run
+            st.session_state["input_seed"] += 1
+            st.rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)  # end .chat-area
 
     if not show_hero:
