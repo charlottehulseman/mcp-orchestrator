@@ -310,6 +310,33 @@ def inject_main_css():
     div[data-testid="stExpander"] button {
         color: #FFFFFF !important;
     }
+    
+    [data-testid="stCaptionContainer"],
+    [data-testid="stCaptionContainer"] * {
+        color: #FFFFFF !important;
+        opacity: 1 !important; /* defeat theme's dimming */
+    }
+
+    /* --- Expander (Tool Usage) header/content colors --- */
+    div[data-testid="stExpander"] > details > summary {
+        background-color: rgba(20,20,25,0.55) !important;
+        color: #FFFFFF !important;
+        border: 1px solid rgba(60,60,70,0.35) !important;
+        border-radius: 10px !important;
+    }
+    div[data-testid="stExpander"] > details[open] > summary {
+        background-color: rgba(20,20,25,0.75) !important;  /* prevent white bar on open */
+    }
+    div[data-testid="stExpander"] > div[role="region"] {
+        background-color: rgba(15,15,20,0.95) !important;
+        border: 1px solid rgba(60,60,70,0.35) !important;
+        border-top: none !important;
+    }
+    div[data-testid="stExpander"] p,
+    div[data-testid="stExpander"] span,
+    div[data-testid="stExpander"] label { color: #FFFFFF !important; }
+    div[data-testid="stExpander"] button { color: #FFFFFF !important; }
+
 
 </style>
 """, unsafe_allow_html=True)
@@ -448,8 +475,9 @@ def render_example_cards(input_key: str):
 def show_main_app():
     inject_main_css()
 
-    if 'chat_history' not in st.session_state:
-        st.session_state.chat_history = []
+    # clear-on-click flag must be handled BEFORE rendering the text_input
+    if st.session_state.pop("_clear_query", False):
+        st.session_state["query_input_chat"] = ""
 
     display_server_status()
     display_metrics()
@@ -530,44 +558,29 @@ def show_main_app():
         with col2:
             submit = st.button("ANALYZE", type="primary")  # no use_container_width
 
-        if submit and query:
-            # add user message
-            st.session_state.chat_history.append({'role': 'user', 'content': query})
-            try:
-                # call your pipeline
-                response, tool_calls, duration = asyncio.run(
-                    process_query(query, agent, tool_map)
-                )
-                st.session_state.chat_history.append({
-                    'role': 'assistant',
-                    'content': response,
-                    'tool_calls': tool_calls,
-                    'duration': duration
-                })
+    if submit and query:
+        st.session_state.chat_history.append({'role': 'user', 'content': query})
+        try:
+            response, tool_calls, duration = asyncio.run(
+                process_query(query, agent, tool_map)
+            )
+            st.session_state.chat_history.append({
+                'role': 'assistant',
+                'content': response,
+                'tool_calls': tool_calls,
+                'duration': duration
+            })
 
-                # ✅ clear the input AFTER click, BEFORE rerun
-                st.session_state['query_input_chat'] = ""
+            # schedule clearing on next run (safe)
+            st.session_state["_clear_query"] = True
+            st.rerun()
 
-                # rerender UI with cleared input
-                st.rerun()
+        except Exception as e:
+            st.error(f"Error: {e}")
 
-            except Exception as e:
-                st.error(f"Error: {e}")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-
-    # ---- Handle submission ----
-    if 'submit' in locals() and submit and query:
-        st.session_state.chat_history.append({'role': 'user', 'content': query})
-        try:
-            response, tool_calls, duration = asyncio.run(process_query(query, agent, tool_map))
-            st.session_state.chat_history.append({
-                'role': 'assistant', 'content': response, 'tool_calls': tool_calls, 'duration': duration
-            })
-            st.rerun()
-        except Exception as e:
-            st.error(f"Error: {e}")
 
     # Footer
     if not show_hero: st.markdown("---")
