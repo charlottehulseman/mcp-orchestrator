@@ -3,10 +3,6 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-# Database
-/data
-/data_backup
-
 # C extensions
 *.so
 
