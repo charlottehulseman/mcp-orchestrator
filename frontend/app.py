@@ -219,15 +219,37 @@ def inject_main_css():
     /* Primary CTA style (ANALYZE) only */
     button[data-testid="stBaseButton-primary"] {
         background: linear-gradient(135deg, #FF3B3B 0%, #B71C1C 100%) !important;
-        color: white !important; border: none !important; border-radius: 12px !important;
-        font-weight: 600 !important; font-size: 0.95rem !important; padding: 1.22rem 2.5rem !important;
-        height: 2.5rem !important; line-height: 56px !important; box-sizing: border-box !important;
-        transition: all 0.3s ease !important; text-transform: uppercase !important; letter-spacing: 1.5px !important;
-        box-shadow: 0 4px 12px rgba(255, 59, 59, 0.35) !important; display:flex !important; align-items:center !important; justify-content:center !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 12px !important;
+
+        /* stable dimensions */
+        height: 56px !important;
+        padding: 0 24px !important;
+        min-width: 140px !important;
+
+        /* typography */
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+
+        /* layout */
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+
+        /* polish */
+        box-sizing: border-box !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 12px rgba(255, 59, 59, 0.35) !important;
     }
     button[data-testid="stBaseButton-primary"]:hover {
         background: linear-gradient(135deg, #B71C1C 0%, #FF3B3B 100%) !important;
-        transform: translateY(-2px) !important; box-shadow: 0 6px 20px rgba(255, 59, 59, 0.5) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(255, 59, 59, 0.5) !important;
     }
 
     /* Chat messages */
@@ -282,14 +304,13 @@ def inject_main_css():
     
     div[data-testid="stExpander"] p,
     div[data-testid="stExpander"] span,
-        background-color: none;
     div[data-testid="stExpander"] label {
         color: #FFFFFF !important;
     }
-
     div[data-testid="stExpander"] button {
         color: #FFFFFF !important;
     }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -497,9 +518,9 @@ def show_main_app():
 
         # 2) Input under the conversation
         st.markdown('<div class="chat-input-section">', unsafe_allow_html=True)
-        col1, col2 = st.columns([5, 1])
+        col1, col2 = st.columns([5, 1.4])  # a bit wider for the button
+
         with col1:
-            # No 'value=' -> avoids the session-state warning when we set the key from cards
             query = st.text_input(
                 "Query",
                 placeholder="Ask about fighters, odds, news, or community sentiment...",
@@ -507,25 +528,34 @@ def show_main_app():
                 label_visibility="collapsed"
             )
         with col2:
-            submit = st.button("ANALYZE", type="primary", use_container_width=True)
-            
-        if 'submit' in locals() and submit and query:
+            submit = st.button("ANALYZE", type="primary")  # no use_container_width
+
+        if submit and query:
+            # add user message
             st.session_state.chat_history.append({'role': 'user', 'content': query})
             try:
-                response, tool_calls, duration = asyncio.run(process_query(query, agent, tool_map))
+                # call your pipeline
+                response, tool_calls, duration = asyncio.run(
+                    process_query(query, agent, tool_map)
+                )
                 st.session_state.chat_history.append({
                     'role': 'assistant',
                     'content': response,
                     'tool_calls': tool_calls,
                     'duration': duration
                 })
+
+                # ✅ clear the input AFTER click, BEFORE rerun
+                st.session_state['query_input_chat'] = ""
+
+                # rerender UI with cleared input
                 st.rerun()
+
             except Exception as e:
                 st.error(f"Error: {e}")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown('</div>', unsafe_allow_html=True)  # end .chat-area
 
     # ---- Handle submission ----
     if 'submit' in locals() and submit and query:
