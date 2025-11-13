@@ -22,11 +22,11 @@ from dotenv import load_dotenv
 # Load env variables
 load_dotenv()
 
-# CRITICAL FIX: Use absolute path to database
+# use absolute path to database
 PROJECT_ROOT = Path(__file__).parent.parent
 DB_PATH = PROJECT_ROOT / "data" / "boxing_data.db"
 
-# Debug logging
+# debug logging
 print(f"Server starting...", file=sys.stderr)
 print(f"Project root: {PROJECT_ROOT}", file=sys.stderr)
 print(f"Database path: {DB_PATH}", file=sys.stderr)

@@ -5,7 +5,6 @@ ADVANCED BOXING ANALYSIS TOOLS
 These tools leverage the enhanced database with complete fight histories,
 title records, and deep data to provide sophisticated analytics.
 
-Add these to your boxing_data.py server for advanced capabilities.
 """
 
 import sqlite3

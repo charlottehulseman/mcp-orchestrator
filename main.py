@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Boxing Intelligence Platform - Main Integration
+Boxing Intelligence Platform
 Complete multi-server MCP system with LangChain orchestration and observability
-NOW WITH REDDIT SOCIAL MEDIA ANALYSIS!
+
+needs to be updated to include advanced prediction server
 """
 
 import asyncio
@@ -14,7 +15,6 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 # Import observability
@@ -39,10 +39,9 @@ async def setup_boxing_platform():
     print("="*70)
     print("\n Initializing multi-server system...\n")
     
-    # Get project root
     project_root = Path(__file__).parent
     
-    # Configure all FOUR boxing servers - ALL USING STDIO
+    # Configure all boxing servers using stdio
     server_config = {
         "boxing_analytics": {
             "transport": "stdio",
@@ -146,7 +145,7 @@ async def demo_simple_query(agent, tools):
         monitor = get_monitor()
         monitor.log_query(query)
     
-    # Create tool name -> tool mapping for execution
+    # Create tool name > tool mapping for execution
     tool_map = {tool.name: tool for tool in tools}
     
     messages = [HumanMessage(content=query)]
@@ -240,7 +239,7 @@ Give me a comprehensive social media intelligence report.
                 # Time tool execution
                 start_time = time.time()
                 
-                # Get the tool and execute it
+                # Get tool and execute it
                 tool = tool_map.get(tool_name)
                 if tool:
                     result = await tool.ainvoke(tool_args)
@@ -296,7 +295,7 @@ Use ALL available intelligence sources across all four servers.
         monitor = get_monitor()
         monitor.log_query(query)
     
-    # Create tool name -> tool mapping for execution
+    # Create tool name > tool mapping for execution
     tool_map = {tool.name: tool for tool in tools}
     
     messages = [HumanMessage(content=query)]
@@ -335,7 +334,6 @@ Use ALL available intelligence sources across all four servers.
                     tool_call_id=tool_call['id']
                 ))
         else:
-            # No more tool calls, we have the final answer
             break
     
     print("Complete Intelligence Report:")
@@ -358,7 +356,7 @@ async def interactive_mode(agent, tools):
     print("  • 'Find value bets with social media confirmation'")
     print()
     
-    # Create tool name -> tool mapping for execution
+    # Create tool name > tool mapping for execution
     tool_map = {tool.name: tool for tool in tools}
     
     while True:
@@ -367,7 +365,7 @@ async def interactive_mode(agent, tools):
             
             if query.lower() in ['quit', 'exit', 'q']:
                 print("\nThanks for using the Boxing Intelligence Platform!")
-                # Show performance summary if observability is available
+                # Show performance summary
                 if OBSERVABILITY_AVAILABLE:
                     monitor = get_monitor()
                     monitor.print_summary()
@@ -419,7 +417,6 @@ async def interactive_mode(agent, tools):
                             tool_call_id=tool_call['id']
                         ))
                 else:
-                    # No more tool calls, we have the final answer
                     break
             
             print("Response:")
@@ -429,14 +426,14 @@ async def interactive_mode(agent, tools):
             print()
             
         except KeyboardInterrupt:
-            print("\n\nThanks for using the Boxing Intelligence Platform!")
-            # Show performance summary if observability is available
+            print("\n\nThanks for using the Boxing Intelligence Platform.")
+            # Show performance summary
             if OBSERVABILITY_AVAILABLE:
                 monitor = get_monitor()
                 monitor.print_summary()
             break
         except Exception as e:
-            print(f"\n❌ Error: {e}\n")
+            print(f"\n Error: {e}\n")
             if OBSERVABILITY_AVAILABLE:
                 monitor = get_monitor()
                 monitor.log_error(str(e), {"query": query})
@@ -445,7 +442,7 @@ async def interactive_mode(agent, tools):
 async def main():
     """Main entry point."""
     
-    # Setup observability (LangSmith)
+    # Setup observability with langsmith
     print("\n🔍 Checking observability setup...")
     if OBSERVABILITY_AVAILABLE:
         setup_langsmith()
@@ -454,36 +451,36 @@ async def main():
     # Pre-flight checks
     print("\n📋 Pre-flight Checks:")
     
-    # Check ANTHROPIC_API_KEY
+    # Check api key
     if not os.getenv("ANTHROPIC_API_KEY"):
-        print("   ❌ ANTHROPIC_API_KEY not set!")
+        print("     ANTHROPIC_API_KEY not set")
         print("      Set with: export ANTHROPIC_API_KEY='your_key_here'")
         return
-    print("   ✅ ANTHROPIC_API_KEY set")
+    print("   ANTHROPIC_API_KEY set")
     
     # Check ODDS_API_KEY (optional)
     if os.getenv("ODDS_API_KEY"):
-        print("   ✅ ODDS_API_KEY set (live betting data)")
+        print("   ODDS_API_KEY set (live betting data)")
     else:
-        print("   ⚠️  ODDS_API_KEY not set (limited betting features)")
+        print("    ODDS_API_KEY not set (limited betting features)")
     
     # Check REDDIT credentials (optional)
     if os.getenv("REDDIT_CLIENT_ID") and os.getenv("REDDIT_CLIENT_SECRET"):
-        print("   ✅ REDDIT_CLIENT_ID/SECRET set (live social media data)")
+        print("   REDDIT_CLIENT_ID/SECRET set (live social media data)")
     else:
-        print("   ⚠️  Reddit API not set (see REDDIT_SETUP.md)")
+        print("    Reddit API not set (see REDDIT_SETUP.md)")
     
     # Check NEWS_API_KEY (optional)
     if os.getenv("NEWS_API_KEY"):
-        print("   ✅ NEWS_API_KEY set (live news data)")
+        print("   NEWS_API_KEY set (live news data)")
     else:
-        print("   ⚠️  NEWS_API_KEY not set (limited news features)")
+        print("    NEWS_API_KEY not set (limited news features)")
     
     # Check boxing database
     if Path("data/boxing_data.db").exists():
-        print("   ✅ Boxing database found (232 fighters)")
+        print("   Boxing database found (232 fighters)")
     else:
-        print("   ⚠️  Boxing database not found")
+        print("    Boxing database not found")
         print("      Create with: python scripts/init_boxing_db.py")
     
     print()

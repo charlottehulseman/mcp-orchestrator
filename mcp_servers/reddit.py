@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-Boxing Reddit MCP Server - REAL DATA ONLY
+Boxing Reddit MCP Server
 
 Provides Reddit social media analysis for boxing discussions.
 Requires REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USER_AGENT.
-NO DEMO/FAKE DATA - REAL PROJECT ONLY.
 """
 
 import asyncio
@@ -421,7 +420,7 @@ async def get_community_sentiment(
         sample_positive = []
         sample_negative = []
         
-        # Simple sentiment indicators (can be enhanced with NLP)
+        # Simple sentiment indicators (should be enhanced with NLP later)
         positive_words = ['great', 'amazing', 'best', 'incredible', 'fantastic', 'love', 'impressive', 'dominant', 'skilled']
         negative_words = ['terrible', 'worst', 'boring', 'overrated', 'disappointing', 'weak', 'lost', 'bad', 'poor']
         
@@ -693,7 +692,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         )]
     
     except ValueError as e:
-        # Return the actual error to the user
+        # Return error
         return [TextContent(
             type="text",
             text=json.dumps({
