@@ -300,24 +300,32 @@ def inject_main_css():
         div[data-testid="stExpander"] label,
         div[data-testid="stExpander"] button { color:#FFF !important; }
         
-        /* Make Streamlit runner header black */
-        [data-testid="stHeader"] {
+        /* Override Streamlit's white top toolbar */
+        [data-testid="stToolbar"],
+        .stAppToolbar {
             background-color: #191C20 !important;
             color: #ffffff !important;
             border-bottom: 1px solid rgba(255,255,255,0.1) !important;
         }
 
-        /* Ensure icons and text are visible */
-        [data-testid="stHeader"] svg, 
-        [data-testid="stHeader"] div, 
-        [data-testid="stHeader"] span {
+        /* Ensure toolbar icons and menu dots are visible on black */
+        [data-testid="stToolbar"] svg,
+        [data-testid="stToolbar"] div,
+        [data-testid="stToolbar"] button,
+        [data-testid="stToolbar"] span {
             color: #ffffff !important;
             fill: #ffffff !important;
         }
 
-        /* Optional: hide top margin shadow if it exists */
-        header {
+        /* Optional: match your app gradient instead of solid black */
+        .stAppToolbar {
+            background: linear-gradient(135deg, #0A0E27 0%, #1A1F3A 100%) !important;
+        }
+
+        /* Hide any shadow/margin Streamlit adds */
+        header, [data-testid="stHeader"] {
             box-shadow: none !important;
+            background: transparent !important;
         }
         </style>
         """,
