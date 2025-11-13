@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Boxonomics - Boxing Intelligence Platform
-Zeabur-inspired design with gradient background and dark cards
+Sleek black and red design matching splash page aesthetic
 """
 
 import streamlit as st
@@ -50,11 +50,9 @@ def get_base64_image(image_path):
         return None
 
 
-# Simplified Splash Page Styles
+# -------------------- Splash Page Styles --------------------
 def inject_splash_css(bg_image_base64=None):
     """Inject CSS for sleek, minimal splash page."""
-    
-    # Background image or fallback gradient
     if bg_image_base64:
         background = f"""
             background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)),
@@ -67,167 +65,62 @@ def inject_splash_css(bg_image_base64=None):
         background = """
             background: linear-gradient(135deg, #0A0E27 0%, #1A1F3A 100%);
         """
-    
-    st.markdown(f"""
+
+    css = """
     <style>
-        /* Remove ALL Streamlit default styling and chrome */
+        /* Hide Streamlit chrome */
         [data-testid="stHeader"],
         [data-testid="stToolbar"],
         [data-testid="stDecoration"],
         [data-testid="stStatusWidget"],
-        header,
-        footer {{
-            display: none !important;
-        }}
-        
-        /* Force full-screen dark background */
-        .stApp {{
-            background-color: #000000 !important;
-            overflow: hidden;
-        }}
-        
-        .main {{
-            padding: 0 !important;
-            background-color: transparent !important;
-        }}
-        
-        /* Remove ALL default padding/margins */
-        .block-container {{
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-        }}
-        
-        .element-container {{
-            margin: 0 !important;
-            padding: 0 !important;
-        }}
-        
-        div[data-testid="column"] {{
-            padding: 0 !important;
-        }}
-        
-        /* Splash Container */
-        .splash-container {{
-            {background}
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-            padding-left: 8%;
-            margin: 0;
-            z-index: 1;
-        }}
-        
-        /* Content Wrapper */
-        .splash-content {{
-            max-width: 700px;
-            text-align: left;
-        }}
-        
-        /* Logo/Title */
-        .splash-logo {{
-            font-size: 7rem;
-            font-weight: 400;
+        header, footer { display: none !important; }
+
+        /* Base app background */
+        .stApp { background-color: #000000 !important; overflow: hidden; }
+        .main { padding: 0 !important; background-color: transparent !important; }
+        .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+        .element-container { margin: 0 !important; padding: 0 !important; }
+        div[data-testid="column"] { padding: 0 !important; }
+
+        /* Splash container */
+        .splash-container {
+            %BACKGROUND%
+            position: fixed; inset: 0;
+            width: 100vw; height: 100vh;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: flex-start;
+            padding-left: 8%; z-index: 1;
+        }
+
+        .splash-content { max-width: 700px; text-align: left; }
+
+        .splash-logo {
+            font-size: 7rem; font-weight: 400;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #FF3B3B 0%, #B71C1C 50%, #8B0000 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 1.5rem;
-            letter-spacing: -2px;
-            animation: fadeInLeft 0.8s ease-out;
-            text-transform: uppercase;
-        }}
-        
-        /* Tagline */
-        .splash-tagline {{
-            font-size: 1.4rem;
-            color: #D0D3DC;
-            margin-bottom: 2.5rem;
-            font-weight: 300;
-            animation: fadeInLeft 1s ease-out;
-            line-height: 1.6;
-        }}
-        
-        /* Animations */
-        @keyframes fadeIn {{
-            from {{ opacity: 0; }}
-            to {{ opacity: 1; }}
-        }}
-        
-        @keyframes fadeInLeft {{
-            from {{
-                opacity: 0;
-                transform: translateX(-50px);
-            }}
-            to {{
-                opacity: 1;
-                transform: translateX(0);
-            }}
-        }}
-        
-        @keyframes fadeInUp {{
-            from {{
-                opacity: 0;
-                transform: translateY(30px);
-            }}
-            to {{
-                opacity: 1;
-                transform: translateY(0);
-            }}
-        }}
-        
-        @keyframes pulse {{
-            0%, 100% {{
-                box-shadow: 0 8px 25px rgba(255, 59, 59, 0.4);
-            }}
-            50% {{
-                box-shadow: 0 8px 35px rgba(255, 59, 59, 0.7);
-            }}
-        }}
-    </style>
-    """, unsafe_allow_html=True)
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 1.5rem; letter-spacing: -2px;
+            animation: fadeInLeft 0.8s ease-out; text-transform: uppercase;
+        }
 
+        .splash-tagline {
+            font-size: 1.4rem; color: #D0D3DC; margin-bottom: 2.5rem;
+            font-weight: 300; animation: fadeInLeft 1s ease-out; line-height: 1.6;
+        }
 
-def show_splash_page():
-    """Display the simplified splash/landing page."""
-    
-    # Try to load the background image
-    bg_image_path = "frontend/assets/splash_bg.png"
-    bg_image_base64 = get_base64_image(bg_image_path)
-    
-    # Inject splash CSS
-    inject_splash_css(bg_image_base64)
-    
-    # Splash content
-    st.markdown("""
-    <div class="splash-container">
-        <div class="splash-content">
-            <div class="splash-logo">BOXONOMICS</div>
-            <div class="splash-tagline">AI-Powered Boxing Intelligence & Analysis Platform</div>
-        </div>
-    </div>
-    
-    <style>
-        /* Position Start button below description */
-        .stButton {
+        /* CTA button: use Streamlit key class (st-key-start_btn) for targeting */
+        .st-key-start_btn [data-testid="stButton"] {
             position: fixed !important;
             left: 8% !important;
             top: 65% !important;
-            z-index: 999999 !important;
+            z-index: 2147483647 !important;
+            width: auto !important;
+            pointer-events: auto !important;
         }
-        
-        .stButton > button {
+
+        .st-key-start_btn [data-testid="stButton"] > button {
             background: linear-gradient(135deg, #FF3B3B 0%, #B71C1C 100%) !important;
-            color: white !important;
+            color: #fff !important;
             font-size: 1.2rem !important;
             font-weight: 600 !important;
             padding: 0.75rem 2.75rem !important;
@@ -242,338 +135,192 @@ def show_splash_page():
             min-width: auto !important;
             width: auto !important;
         }
-        
-        .stButton > button:hover {
+
+        .st-key-start_btn [data-testid="stButton"] > button:hover {
             background: linear-gradient(135deg, #B71C1C 0%, #FF3B3B 100%) !important;
             transform: translateY(-3px) !important;
             box-shadow: 0 12px 35px rgba(255, 59, 59, 0.6) !important;
         }
-        
-        .stButton > button:focus,
-        .stButton > button:active {
-            background: linear-gradient(135deg, #B71C1C 0%, #FF3B3B 100%) !important;
-            box-shadow: 0 6px 20px rgba(255, 59, 59, 0.5) !important;
-            outline: none !important;
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-50px);} to { opacity: 1; transform: none; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px);} to { opacity: 1; transform: none; } }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 8px 25px rgba(255, 59, 59, 0.4); }
+            50%      { box-shadow: 0 8px 35px rgba(255, 59, 59, 0.7); }
         }
     </style>
+    """.replace("%BACKGROUND%", background)
+
+    st.markdown(css, unsafe_allow_html=True)
+
+
+def show_splash_page():
+    """Display the simplified splash/landing page."""
+    bg_image_path = "frontend/assets/splash_bg.png"
+    bg_image_base64 = get_base64_image(bg_image_path)
+    inject_splash_css(bg_image_base64)
+
+    st.markdown("""
+    <div class="splash-container">
+        <div class="splash-content">
+            <div class="splash-logo">BOXONOMICS</div>
+            <div class="splash-tagline">AI-Powered Boxing Intelligence & Analysis Platform</div>
+        </div>
+    </div>
     """, unsafe_allow_html=True)
-    
-    # Functional Start button
-    if st.button("Get in the Ring", key="start_btn"):
+
+    # Scoped container so only this button gets splash styling
+    if st.button("Get in the Ring", key="start_btn", type="primary"):
         st.session_state.show_splash = False
         st.rerun()
 
 
-# Main App CSS (Zeabur-inspired with gradient background)
+
+
+# -------------------- Main App CSS --------------------
 def inject_main_css():
-    """Inject CSS for main chatbot interface - Zeabur style with gradient background."""
+    """Inject CSS for main chatbot interface."""
     st.markdown("""
 <style>
-    /* Global Styles - Gradient Background like Zeabur */
     .stApp {
-        background: linear-gradient(135deg, #1A0F1F 0%, #0A0E27 25%, #1A1030 50%, #0A0E27 75%, #1A0F1F 100%);
+        background: linear-gradient(to bottom right, #191C20 70%, #8c1616);
         background-attachment: fixed;
     }
-    
-    /* Main Container */
-    .main {
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-    
-    /* Hero Section */
-    .hero-section {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 3rem 2rem 2rem 2rem;
-        text-align: center;
-    }
-    
-    /* Main Header - Match Splash Page Typography */
+    .main { max-width: 1400px; margin: 0 auto; }
+
+    .hero-section { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem 2rem 2rem; text-align: center; }
     .main-header {
-        font-size: 4rem;
-        font-weight: 400;
+        font-size: 4rem; font-weight: 100;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
         text-align: center;
         background: linear-gradient(135deg, #FF3B3B 0%, #B71C1C 50%, #8B0000 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 1rem;
-        letter-spacing: -2px;
-        text-transform: uppercase;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; margin-bottom: 1rem; letter-spacing: -1.5px; text-transform: uppercase;
     }
-    
-    .sub-header {
-        text-align: center;
-        color: #C0C0D0;
-        font-size: 1.1rem;
-        margin-bottom: 2.5rem;
-        font-weight: 300;
-        max-width: 700px;
-        margin-left: auto;
-        margin-right: auto;
-        line-height: 1.6;
-    }
-    
-    /* Chat Input Container - Above Cards */
-    .chat-input-section {
-        max-width: 1000px;
-        margin: 0 auto 3rem auto;
-        padding: 0 2rem;
-    }
-    
-    /* Input styling - Darker background with better contrast */
+    .sub-header { text-align:center; color:#D0D3DC; font-size:1.1rem; margin-bottom:2.5rem; font-weight:300; max-width:700px; margin-left:auto; margin-right:auto; line-height:1.6; }
+
+    /* Chat area container (right column) */
+    .chat-area { padding-right: 1rem; }
+    .chat-input-section { max-width: 1000px; margin: 0 auto 3rem auto; padding: 0 0; }
+
     .stTextInput > div > div > input {
-        background: rgba(30, 30, 45, 0.9) !important;
-        color: #FFFFFF !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 1.2rem 1.6rem !important;
-        font-size: 1rem !important;
-        transition: all 0.3s ease !important;
+        background: #2C2D3D !important; color: #FFFFFF !important; border: none !important;
+        padding: 0.95rem 1.6rem 2rem !important; font-size: 1rem !important; line-height: 1.5 !important;
+        border-radius: 12px !important; transition: all 0.3s ease !important; font-weight: 300 !important; height: 56px !important;
+        box-sizing: border-box !important; vertical-align: middle !important;
     }
-    
-    .stTextInput > div > div > input:focus {
-        background: rgba(35, 35, 50, 1) !important;
-        box-shadow: 0 0 0 2px rgba(255, 59, 59, 0.4) !important;
-    }
-    
-    .stTextInput > div > div > input::placeholder {
-        color: #808090 !important;
-    }
-    
-    /* Button styling */
-    .stButton > button {
+    .stTextInput > div > div { border-radius: 12px !important; border-color: #717395 !important; }
+    .stTextInput > div { border-radius: 12px !important; border-color: #717395 !important; }
+    .stTextInput > div > div > input:focus { background: #353647 !important; box-shadow: 0 0 0 2px rgba(14,165,233,.3) !important; }
+    .stTextInput > div > div > input::placeholder { color: rgba(255,255,255,0.7) !important; font-weight:300 !important; }
+
+    /* Primary CTA style (ANALYZE) only */
+    button[data-testid="stBaseButton-primary"] {
         background: linear-gradient(135deg, #FF3B3B 0%, #B71C1C 100%) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        font-weight: 600 !important;
-        font-size: 0.95rem !important;
-        padding: 1.2rem 2.5rem !important;
-        transition: all 0.3s ease !important;
-        text-transform: uppercase !important;
-        letter-spacing: 1.5px !important;
-        box-shadow: 0 4px 12px rgba(255, 59, 59, 0.35) !important;
+        color: white !important; border: none !important; border-radius: 12px !important;
+        font-weight: 600 !important; font-size: 0.95rem !important; padding: 1.22rem 2.5rem !important;
+        height: 2.5rem !important; line-height: 56px !important; box-sizing: border-box !important;
+        transition: all 0.3s ease !important; text-transform: uppercase !important; letter-spacing: 1.5px !important;
+        box-shadow: 0 4px 12px rgba(255, 59, 59, 0.35) !important; display:flex !important; align-items:center !important; justify-content:center !important;
     }
-    
-    .stButton > button:hover {
+    button[data-testid="stBaseButton-primary"]:hover {
         background: linear-gradient(135deg, #B71C1C 0%, #FF3B3B 100%) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(255, 59, 59, 0.5) !important;
+        transform: translateY(-2px) !important; box-shadow: 0 6px 20px rgba(255, 59, 59, 0.5) !important;
     }
-    
-    /* Chat Messages - More opaque for better visibility */
+
+    /* Chat messages */
     .chat-message {
-        padding: 1.75rem;
-        border-radius: 16px;
-        margin: 1.5rem auto;
-        max-width: 1000px;
-        background: rgba(25, 25, 40, 0.95);
-        border: 1px solid rgba(80, 80, 100, 0.5);
-        backdrop-filter: blur(10px);
+        padding: 1.75rem; border-radius: 16px; margin: 1.0rem auto; max-width: 1000px;
+        background: rgba(20,20,25,0.98); border: 1px solid rgba(60,60,70,0.4); backdrop-filter: blur(10px);
     }
-    
-    .user-message {
-        border-left: 3px solid #4A9EFF;
-    }
-    
-    .assistant-message {
-        border-left: 3px solid #FF3B3B;
-    }
-    
-    .message-role {
-        font-weight: 600;
-        font-size: 0.85rem;
-        color: #B0B0C0;
-        margin-bottom: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 1.2px;
-    }
-    
-    .message-content {
-        color: #FFFFFF;
-        line-height: 1.8;
-        font-size: 1.05rem;
-    }
-    
-    /* Tool Calls */
+    .user-message { border-left: 3px solid #4A81CC; }     /* your messages = blue */
+    .assistant-message { border-left: 3px solid #B71C1C; }
+
+    .message-role { font-weight: 600; font-size: 0.85rem; color: #909099; margin-bottom: 0.9rem; text-transform: uppercase; letter-spacing: 1.2px; }
+    .message-content { color: #E8E8ED; line-height: 1.8; font-size: 1.05rem; font-weight: 300; }
+
     .tool-call {
-        background: rgba(139, 0, 0, 0.2);
-        border: 1px solid rgba(255, 59, 59, 0.4);
-        border-radius: 10px;
-        padding: 0.85rem;
-        margin: 0.6rem 0;
-        font-size: 0.9rem;
-        color: #FFFFFF;
+        background: rgba(74, 129, 204, 0.15); border: 1px solid rgba(74, 129, 204,0.3);
+        border-radius: 10px; padding: 0.85rem; margin: 0.6rem 0; font-size: 0.9rem; color: #E8E8ED;
     }
-    
-    .tool-name {
-        color: #FF6B6B;
-        font-weight: 600;
+    .tool-name { color:#4A81CC; font-weight:600; }
+    .tool-server { color:#909099; font-size:0.85rem; }
+    .tool-duration { color:#00D084; font-weight:500; }
+
+    [data-testid="stSidebar"] { background:#000; border-right: 1px solid rgba(60,60,70,0.3); }
+
+    /* Examples container + card buttons (secondary) in MAIN area only */
+    .examples-wrap { background:#20232D; border-radius:14px; padding:12px; height:100%; }
+    .examples-sticky { position: sticky; top: 75px; }
+    .examples-title { color:#9aa7bd; font-weight:700; font-size:.9rem; text-transform:uppercase; letter-spacing:1px; margin:4px 0 10px 2px; }
+
+    .block-container :not([data-testid="stSidebar"]) button[data-testid="stBaseButton-secondary"] {
+        width:100%; text-align:left; background:#2A2E4F !important; color:#4A81CC !important;
+        border:1px solid rgba(255,255,255,0.06) !important; border-radius:12px !important;
+        padding:12px 12px !important; box-shadow:none !important; font-weight:500 !important;
+        line-height:1.35 !important; white-space:normal !important; word-break:break-word !important; min-height:84px;
     }
-    
-    .tool-server {
-        color: #B0B0C0;
-        font-size: 0.85rem;
+    .block-container :not([data-testid="stSidebar"]) button[data-testid="stBaseButton-secondary"] p {
+        margin:0 !important; white-space:normal !important; word-break:break-word !important; line-height:1.35 !important;
     }
-    
-    .tool-duration {
-        color: #00D084;
-        font-weight: 500;
+    .block-container :not([data-testid="stSidebar"]) button[data-testid="stBaseButton-secondary"]:hover {
+        filter:brightness(1.06); transform: translateY(-1px);
     }
+
+    /* Footer, scrollbars, etc. */
+    .footer { text-align:center; color:#606069; font-size:.9rem; margin-top:4rem; padding:2rem; border-top:1px solid rgba(60,60,70,0.3); }
+    ::-webkit-scrollbar { width:10px; } ::-webkit-scrollbar-track { background:#000; }
+    ::-webkit-scrollbar-thumb { background:rgba(183,28,28,0.5); border-radius:5px; }
+    ::-webkit-scrollbar-thumb:hover { background:#B71C1C; }
+    .stSpinner > div { border-top-color:#FF3B3B !important; }
+    .streamlit-expanderHeader { background-color:rgba(20,20,25,0.5) !important; color:#909099 !important; border:1px solid rgba(60,60,70,0.3) !important; border-radius:8px !important; }
+    .streamlit-expanderHeader:hover { background-color:rgba(30,30,35,0.7) !important; border-color:rgba(255,59,59,0.3) !important; }
+    .streamlit-expanderContent { background-color:rgba(15,15,20,0.95) !important; border:1px solid rgba(60,60,70,0.3) !important; border-top:none !important; }
+    .stCaption { color:#FFFFFF !important; }
     
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0F1219 0%, #1A0F1F 100%);
-        border-right: 1px solid rgba(80, 80, 100, 0.3);
+    div[data-testid="stExpander"] p,
+    div[data-testid="stExpander"] span,
+        background-color: none;
+    div[data-testid="stExpander"] label {
+        color: #FFFFFF !important;
     }
-    
-    /* Server Status Cards - More opaque */
-    .server-card {
-        background: rgba(25, 25, 40, 0.95);
-        border: 1px solid rgba(80, 80, 100, 0.5);
-        border-radius: 12px;
-        padding: 1rem;
-        margin: 0.75rem 0;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(10px);
-    }
-    
-    .server-card:hover {
-        border-color: rgba(255, 59, 59, 0.7);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 59, 59, 0.25);
-    }
-    
-    .server-card.active {
-        border-left: 3px solid #FF3B3B;
-    }
-    
-    .server-name {
-        color: #FFFFFF;
-        font-weight: 600;
-        font-size: 0.95rem;
-        margin-bottom: 0.25rem;
-    }
-    
-    .server-status {
-        color: #00D084;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-    
-    /* Section Headers */
-    .section-header {
-        color: #FF3B3B;
-        font-size: 1rem;
-        font-weight: 700;
-        margin-top: 1.5rem;
-        margin-bottom: 1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    /* Divider */
-    hr {
-        border-color: rgba(80, 80, 100, 0.3);
-        margin: 2rem 0;
-    }
-    
-    /* Footer */
-    .footer {
-        text-align: center;
-        color: #707080;
-        font-size: 0.9rem;
-        margin-top: 4rem;
-        padding: 2rem;
-        border-top: 1px solid rgba(80, 80, 100, 0.3);
-    }
-    
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-        width: 10px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #0A0E27;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: rgba(183, 28, 28, 0.5);
-        border-radius: 5px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: #B71C1C;
+
+    div[data-testid="stExpander"] button {
+        color: #FFFFFF !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 
+# -------------------- Platform Init --------------------
 @st.cache_resource
 def initialize_platform():
-    """Initialize the MCP client and agent (cached)."""
-    
-    # Get project root
     project_root = Path(__file__).parent.parent
-    
-    # Configure all FOUR boxing servers
     server_config = {
-        "boxing_analytics": {
-            "transport": "stdio",
-            "command": "python",
-            "args": [str(project_root / "mcp_servers" / "boxing_data.py")],
-        },
-        "betting_odds": {
-            "transport": "stdio",
-            "command": "python",
-            "args": [str(project_root / "mcp_servers" / "boxing_odds.py")],
-        },
-        "fight_news": {
-            "transport": "stdio",
-            "command": "python",
-            "args": [str(project_root / "mcp_servers" / "boxing_news.py")],
-        },
-        "reddit_social": {
-            "transport": "stdio",
-            "command": "python",
-            "args": [str(project_root / "mcp_servers" / "reddit.py")],
-        }
+        "boxing_analytics": {"transport": "stdio","command": "python","args": [str(project_root / "mcp_servers" / "boxing_data.py")]},
+        "betting_odds": {"transport": "stdio","command": "python","args": [str(project_root / "mcp_servers" / "boxing_odds.py")]},
+        "fight_news": {"transport": "stdio","command": "python","args": [str(project_root / "mcp_servers" / "boxing_news.py")]},
+        "reddit_social": {"transport": "stdio","command": "python","args": [str(project_root / "mcp_servers" / "reddit.py")]},
     }
-    
-    # Create MCP client
     client = MultiServerMCPClient(server_config)
-    
-    # Run async initialization
-    async def async_init():
-        tools = await client.get_tools()
-        return tools
-    
+    async def async_init(): return await client.get_tools()
     tools = asyncio.run(async_init())
-    
-    # Create agent with all tools
     llm = ChatAnthropic(model="claude-sonnet-4-20250514", temperature=0)
     agent = llm.bind_tools(tools)
-    
-    # Create tool map
     tool_map = {tool.name: tool for tool in tools}
-    
     return agent, tools, tool_map, client
 
 
 def display_server_status():
-    """Display status of all four servers with modern cards."""
     st.sidebar.markdown('<div class="section-header">Servers</div>', unsafe_allow_html=True)
-    
     servers = [
         ("Analytics", "Fighter stats & history", "active"),
         ("Betting", "Odds & value analysis", "active"),
         ("News", "Media coverage", "active"),
         ("Social", "Reddit sentiment", "active"),
     ]
-    
     for name, description, status in servers:
         st.sidebar.markdown(
             f'''<div class="server-card {status}">
@@ -586,285 +333,225 @@ def display_server_status():
 
 
 def display_metrics():
-    """Display performance metrics in modern cards."""
     if OBSERVABILITY_AVAILABLE:
         monitor = get_monitor()
         stats = monitor.get_stats()
-        
         st.sidebar.markdown('<div class="section-header">Performance</div>', unsafe_allow_html=True)
-        
         col1, col2 = st.sidebar.columns(2)
-        
         with col1:
             st.markdown(
-                f'''<div style="text-align: center; padding: 0.75rem; background: rgba(25, 25, 40, 0.95); border-radius: 8px; border: 1px solid rgba(80, 80, 100, 0.5);">
-                    <div style="color: #FFFFFF; font-size: 1.5rem; font-weight: 700;">{stats['total_queries']}</div>
-                    <div style="color: #B0B0C0; font-size: 0.8rem;">Queries</div>
-                </div>''',
-                unsafe_allow_html=True
-            )
-        
+                f'''<div style="text-align: center; padding: 0.75rem; background: rgba(20, 20, 25, 0.98); border-radius: 8px; border: 1px solid rgba(60, 60, 70, 0.4);">
+                    <div style="font-size: 1.5rem; font-weight: 700;">{stats['total_queries']}</div>
+                    <div style="font-size: 0.8rem;">Queries</div>
+                </div>''', unsafe_allow_html=True)
         with col2:
             st.markdown(
-                f'''<div style="text-align: center; padding: 0.75rem; background: rgba(25, 25, 40, 0.95); border-radius: 8px; border: 1px solid rgba(80, 80, 100, 0.5);">
-                    <div style="color: #FFFFFF; font-size: 1.5rem; font-weight: 700;">{stats['total_tool_calls']}</div>
-                    <div style="color: #B0B0C0; font-size: 0.8rem;">Tool Calls</div>
-                </div>''',
-                unsafe_allow_html=True
-            )
-        
+                f'''<div style="text-align: center; padding: 0.75rem; background: rgba(20, 20, 25, 0.98); border-radius: 8px; border: 1px solid rgba(60, 60, 70, 0.4);">
+                    <div style="font-size: 1.5rem; font-weight: 700;">{stats['total_tool_calls']}</div>
+                    <div style="font-size: 0.8rem;">Tool Calls</div>
+                </div>''', unsafe_allow_html=True)
         if stats['tool_breakdown']:
-            st.sidebar.markdown('<div style="margin-top: 1rem; color: #9CA3AF; font-size: 0.85rem; font-weight: 600;">Most Used Tools</div>', unsafe_allow_html=True)
-            sorted_tools = sorted(
-                stats['tool_breakdown'].items(),
-                key=lambda x: x[1]['count'],
-                reverse=True
-            )[:5]
-            
-            for tool, metrics in sorted_tools:
-                st.sidebar.markdown(
-                    f'<div style="color: #707080; font-size: 0.8rem; margin: 0.25rem 0;">● {tool}: {metrics["count"]}</div>',
-                    unsafe_allow_html=True
-                )
+            st.sidebar.markdown('<div style="margin-top: 1rem; color: #909099; font-size: 0.85rem; font-weight: 600;">Most Used Tools</div>', unsafe_allow_html=True)
+            for tool, metrics in sorted(stats['tool_breakdown'].items(), key=lambda x: x[1]['count'], reverse=True)[:5]:
+                st.sidebar.markdown(f'<div style="color: #707080; font-size: 0.8rem; margin: 0.25rem 0;">● {tool}: {metrics["count"]}</div>', unsafe_allow_html=True)
 
 
 async def process_query(query: str, agent, tool_map):
-    """Process a user query through the agent."""
-    
     start_time = time.time()
-    
     if OBSERVABILITY_AVAILABLE:
-        monitor = get_monitor()
-        monitor.log_query(query)
-    
+        get_monitor().log_query(query)
+
     messages = [HumanMessage(content=query)]
     all_tool_calls = []
-    
-    iteration = 0
-    max_iterations = 10
-    
+    iteration, max_iterations = 0, 10
+
     with st.spinner("Analyzing..."):
         while iteration < max_iterations:
             iteration += 1
-            
             response = await agent.ainvoke(messages)
             messages.append(response)
-            
             if hasattr(response, 'tool_calls') and response.tool_calls:
                 for tool_call in response.tool_calls:
-                    tool_name = tool_call['name']
-                    tool_args = tool_call['args']
-                    
+                    tool_name = tool_call['name']; tool_args = tool_call['args']
                     tool_start = time.time()
-                    
                     tool = tool_map.get(tool_name)
-                    if tool:
-                        result = await tool.ainvoke(tool_args)
-                    else:
-                        result = f"Error: Tool {tool_name} not found"
-                    
+                    result = await tool.ainvoke(tool_args) if tool else f"Error: Tool {tool_name} not found"
                     tool_duration = (time.time() - tool_start) * 1000
-                    
                     all_tool_calls.append({
                         "name": tool_name,
                         "duration_ms": tool_duration,
                         "server": get_server_for_tool(tool_name)
                     })
-                    
                     if OBSERVABILITY_AVAILABLE:
-                        monitor.log_tool_call(tool_name, tool_duration)
-                    
-                    messages.append(ToolMessage(
-                        content=str(result),
-                        tool_call_id=tool_call['id']
-                    ))
+                        get_monitor().log_tool_call(tool_name, tool_duration)
+                    messages.append(ToolMessage(content=str(result), tool_call_id=tool_call['id']))
             else:
                 break
-    
-    total_duration = time.time() - start_time
-    
-    return response.content, all_tool_calls, total_duration
+
+    return response.content, all_tool_calls, (time.time() - start_time)
 
 
 def get_server_for_tool(tool_name: str) -> str:
-    """Determine which server a tool belongs to."""
-    if any(x in tool_name for x in ['fighter', 'stats', 'compare', 'career', 'upcoming', 'trajectory', 'opponent', 'title']):
-        return "Analytics"
-    elif any(x in tool_name for x in ['odds', 'betting', 'value', 'predict']):
-        return "Betting"
-    elif any(x in tool_name for x in ['news', 'hype', 'media', 'press']) and 'reddit' not in tool_name.lower():
-        return "News"
-    elif any(x in tool_name for x in ['reddit', 'posts', 'buzz', 'sentiment', 'mentions']):
-        return "Social"
-    else:
-        return "Unknown"
+    if any(x in tool_name for x in ['fighter','stats','compare','career','upcoming','trajectory','opponent','title']): return "Analytics"
+    if any(x in tool_name for x in ['odds','betting','value','predict']): return "Betting"
+    if any(x in tool_name for x in ['news','hype','media','press']) and 'reddit' not in tool_name.lower(): return "News"
+    if any(x in tool_name for x in ['reddit','posts','buzz','sentiment','mentions']): return "Social"
+    return "Unknown"
 
 
+# -------------------- Examples helpers --------------------
+def _set_query_from_example(text: str, input_key: str):
+    st.session_state[input_key] = text
+
+EXAMPLES = [
+    "Compare Tyson Fury vs Oleksandr Usyk - who has the advantage?",
+    "Give me a complete breakdown of Gervonta Davis's career and fighting style",
+    "Is Devin Haney's career on an upward or downward trajectory?",
+    "What are the betting odds for upcoming heavyweight fights and where's the best value?",
+    "Based on their stats and betting odds, predict the outcome of Fury vs Usyk",
+    "Should I bet on Crawford in his next fight based on historical performance?",
+    "What's the latest boxing news and which fights are generating the most hype?",
+    "What is the boxing community on Reddit saying about Canelo?",
+]
+
+def render_example_cards(input_key: str):
+    st.markdown('<div class="examples-wrap examples-sticky">', unsafe_allow_html=True)
+    st.markdown('<div class="examples-title">Examples</div>', unsafe_allow_html=True)
+    for i, q in enumerate(EXAMPLES):
+        st.button(q, key=f"example_{i}", use_container_width=True,
+                  on_click=_set_query_from_example, args=(q, input_key))
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+# -------------------- Main App --------------------
 def show_main_app():
-    """Display the main chatbot interface with Zeabur-inspired design."""
-    
     inject_main_css()
-    
-    # Initialize session state
+
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
-    
-    # Sidebar
+
     display_server_status()
     display_metrics()
-    
-    # Add clear history button
+
     st.sidebar.markdown("---")
     if st.sidebar.button("Clear History", use_container_width=True):
         st.session_state.chat_history = []
-        if OBSERVABILITY_AVAILABLE:
-            reset_monitor()
+        if OBSERVABILITY_AVAILABLE: reset_monitor()
         st.rerun()
-    
-    # Initialize platform
+
     try:
         with st.spinner("Initializing platform..."):
             agent, tools, tool_map, client = initialize_platform()
-        
         st.sidebar.markdown(
-            f'<div style="text-align: center; margin-top: 1rem; padding: 0.5rem; background: rgba(0, 208, 132, 0.1); border-radius: 8px; color: #00D084; font-size: 0.85rem;">{len(tools)} tools loaded</div>',
+            f'<div style="text-align:center; margin-top:1rem; padding:0.5rem; background:rgba(0,208,132,0.1); border-radius:8px; color:#00D084; font-size:0.85rem;">{len(tools)} tools loaded</div>',
             unsafe_allow_html=True
         )
-        
     except Exception as e:
         st.error(f"Failed to initialize platform: {e}")
         st.info("Make sure all environment variables are set:\n- ANTHROPIC_API_KEY")
         return
-    
-    # Show hero section if no chat history
+
     show_hero = len(st.session_state.chat_history) == 0
-    
     if show_hero:
-        # Header
         st.markdown('<div class="hero-section">', unsafe_allow_html=True)
         st.markdown('<h1 class="main-header">BOXONOMICS</h1>', unsafe_allow_html=True)
-        st.markdown(
-            '<p class="sub-header">Deploy AI-powered boxing intelligence by chatting with specialized MCP servers</p>',
-            unsafe_allow_html=True
-        )
+        st.markdown('<p class="sub-header">Deploy AI-powered boxing intelligence by chatting with specialized MCP servers</p>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Chat input
+
+    # ---- Permanent two-column layout (left: cards, right: chat) ----
+    left, right = st.columns([2, 6], gap="large")
+
+    with left:
+        render_example_cards(input_key="query_input_chat")  # always target the chat input key
+
+    with right:
+        st.markdown('<div class="chat-area">', unsafe_allow_html=True)
+
+        # 1) Messages first (so input sits at the bottom)
+        if st.session_state.chat_history:
+            st.markdown("---")
+            for msg in st.session_state.chat_history:
+                if msg['role'] == 'user':
+                    st.markdown(
+                        f'''<div class="chat-message user-message">
+                                <div class="message-role">You</div>
+                                <div class="message-content">{msg["content"]}</div>
+                            </div>''', unsafe_allow_html=True)
+                else:
+                    st.markdown(
+                        f'''<div class="chat-message assistant-message">
+                                <div class="message-role">Boxonomics AI</div>
+                                <div class="message-content">{msg["content"]}</div>
+                            </div>''', unsafe_allow_html=True)
+                    if 'tool_calls' in msg and msg['tool_calls']:
+                        with st.expander(f"Tool Usage ({len(msg['tool_calls'])} calls)"):
+                            for tc in msg['tool_calls']:
+                                st.markdown(
+                                    f'''<div class="tool-call">
+                                            <span class="tool-server">[{tc["server"]}]</span>
+                                            <span class="tool-name">{tc["name"]}</span>
+                                            <span class="tool-duration">({tc["duration_ms"]:.0f}ms)</span>
+                                        </div>''', unsafe_allow_html=True)
+                    if 'duration' in msg:
+                        st.caption(f"Response time: {msg['duration']:.2f}s")
+
+        # 2) Input under the conversation
         st.markdown('<div class="chat-input-section">', unsafe_allow_html=True)
-        
         col1, col2 = st.columns([5, 1])
-        
         with col1:
+            # No 'value=' -> avoids the session-state warning when we set the key from cards
             query = st.text_input(
                 "Query",
-                value="",
-                placeholder="Ask about fighters, odds, news, or community sentiment...",
-                key="query_input",
-                label_visibility="collapsed"
-            )
-        
-        with col2:
-            submit = st.button("ANALYZE", type="primary", use_container_width=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    else:
-        # Chat mode - input at top
-        col1, col2 = st.columns([5, 1])
-        
-        with col1:
-            query = st.text_input(
-                "Query",
-                value="",
                 placeholder="Ask about fighters, odds, news, or community sentiment...",
                 key="query_input_chat",
                 label_visibility="collapsed"
             )
-        
         with col2:
             submit = st.button("ANALYZE", type="primary", use_container_width=True)
-    
-    # Process query
+            
+        if 'submit' in locals() and submit and query:
+            st.session_state.chat_history.append({'role': 'user', 'content': query})
+            try:
+                response, tool_calls, duration = asyncio.run(process_query(query, agent, tool_map))
+                st.session_state.chat_history.append({
+                    'role': 'assistant',
+                    'content': response,
+                    'tool_calls': tool_calls,
+                    'duration': duration
+                })
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)  # end .chat-area
+
+    # ---- Handle submission ----
     if 'submit' in locals() and submit and query:
-        st.session_state.chat_history.append({
-            'role': 'user',
-            'content': query
-        })
-        
+        st.session_state.chat_history.append({'role': 'user', 'content': query})
         try:
-            response, tool_calls, duration = asyncio.run(
-                process_query(query, agent, tool_map)
-            )
-            
+            response, tool_calls, duration = asyncio.run(process_query(query, agent, tool_map))
             st.session_state.chat_history.append({
-                'role': 'assistant',
-                'content': response,
-                'tool_calls': tool_calls,
-                'duration': duration
+                'role': 'assistant', 'content': response, 'tool_calls': tool_calls, 'duration': duration
             })
-            
             st.rerun()
-            
         except Exception as e:
             st.error(f"Error: {e}")
-    
-    # Display chat history
-    if st.session_state.chat_history:
-        st.markdown("---")
-        
-        for msg in st.session_state.chat_history:
-            if msg['role'] == 'user':
-                st.markdown(
-                    f'''<div class="chat-message user-message">
-                        <div class="message-role">You</div>
-                        <div class="message-content">{msg["content"]}</div>
-                    </div>''',
-                    unsafe_allow_html=True
-                )
-            else:
-                st.markdown(
-                    f'''<div class="chat-message assistant-message">
-                        <div class="message-role">Boxonomics AI</div>
-                        <div class="message-content">{msg["content"]}</div>
-                    </div>''',
-                    unsafe_allow_html=True
-                )
-                
-                if 'tool_calls' in msg and msg['tool_calls']:
-                    with st.expander(f"Tool Usage ({len(msg['tool_calls'])} calls)"):
-                        for tc in msg['tool_calls']:
-                            st.markdown(
-                                f'''<div class="tool-call">
-                                    <span class="tool-server">[{tc["server"]}]</span> 
-                                    <span class="tool-name">{tc["name"]}</span> 
-                                    <span class="tool-duration">({tc["duration_ms"]:.0f}ms)</span>
-                                </div>''',
-                                unsafe_allow_html=True
-                            )
-                
-                if 'duration' in msg:
-                    st.caption(f"Response time: {msg['duration']:.2f}s")
-    
+
     # Footer
-    if not show_hero:
-        st.markdown("---")
+    if not show_hero: st.markdown("---")
     st.markdown(
         '''<div class="footer">
             Boxonomics | Powered by LangChain, MCP & Claude Sonnet 4<br>
             4 Specialized Servers | 25+ Intelligence Tools
-        </div>''',
-        unsafe_allow_html=True
+        </div>''', unsafe_allow_html=True
     )
 
 
 def main():
-    """Main application entry point."""
-    
-    # Initialize session state for splash
     if 'show_splash' not in st.session_state:
         st.session_state.show_splash = True
-    
-    # Show splash or main app
     if st.session_state.show_splash:
         show_splash_page()
     else:
