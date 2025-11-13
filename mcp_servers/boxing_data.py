@@ -12,6 +12,7 @@ import sqlite3
 import sys
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -21,30 +22,34 @@ from dotenv import load_dotenv
 # Load env variables
 load_dotenv()
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# CRITICAL FIX: Use absolute path to database
+PROJECT_ROOT = Path(__file__).parent.parent
+DB_PATH = PROJECT_ROOT / "data" / "boxing_data.db"
+
+# Debug logging
+print(f"Server starting...", file=sys.stderr)
+print(f"Project root: {PROJECT_ROOT}", file=sys.stderr)
+print(f"Database path: {DB_PATH}", file=sys.stderr)
+print(f"Database exists: {DB_PATH.exists()}", file=sys.stderr)
 
 # Import prediction functions - these should be in boxing_prediction.py
-# If they don't exist, we'll define stubs
 try:
+    sys.path.insert(0, str(PROJECT_ROOT))
     from mcp_servers.boxing_prediction import (
         analyze_career_trajectory,
         compare_common_opponents,
         analyze_title_fight_performance
     )
     PREDICTION_AVAILABLE = True
-except ImportError:
+    print("Prediction module loaded", file=sys.stderr)
+except ImportError as e:
     PREDICTION_AVAILABLE = False
-    print("Warning: boxing_prediction.py not found, advanced tools disabled", file=sys.stderr)
-
-
-# Db connection
-DB_PATH = "data/boxing_data.db"
+    print(f"Warning: boxing_prediction.py not found ({e}), advanced tools disabled", file=sys.stderr)
 
 
 def get_db_connection():
     """Get a database connection."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row  # Return rows as dicts
     return conn
 
@@ -722,10 +727,12 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         )]
     
     except Exception as e:
+        import traceback
         return [TextContent(
             type="text",
             text=json.dumps({
                 "error": str(e),
+                "traceback": traceback.format_exc(),
                 "tool": name,
                 "arguments": arguments
             }, indent=2)
@@ -735,16 +742,32 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
 async def main():
     """Run the MCP server."""
     # Check if db exists
-    import os
-    if not os.path.exists(DB_PATH):
-        print(f"Error: Database not found at {DB_PATH}", file=sys.stderr)
-        print("Please run: python scripts/init_boxing_db.py", file=sys.stderr)
+    if not DB_PATH.exists():
+        print(f"ERROR: Database not found at {DB_PATH}", file=sys.stderr)
+        print(f"Searched at: {DB_PATH.absolute()}", file=sys.stderr)
+        print("Please ensure data/boxing_data.db is in your repository", file=sys.stderr)
         sys.exit(1)
     
+    print(f"Database found at {DB_PATH}", file=sys.stderr)
+    print("Starting server...", file=sys.stderr)
+    
     # Run server
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(read_stream, write_stream, app.create_initialization_options())
+    try:
+        async with stdio_server() as (read_stream, write_stream):
+            print("Server running", file=sys.stderr)
+            await app.run(read_stream, write_stream, app.create_initialization_options())
+    except Exception as e:
+        print(f"ERROR running server: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        print(f"FATAL ERROR: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)
