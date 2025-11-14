@@ -18,21 +18,30 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 from dotenv import load_dotenv
+import logging
+
+# Configure logging to file 
+logging.basicConfig(
+    filename='/tmp/boxing_server.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Load env variables
 load_dotenv()
 
-# use absolute path to database
+# Use absolute path to database
 PROJECT_ROOT = Path(__file__).parent.parent
 DB_PATH = PROJECT_ROOT / "data" / "boxing_data.db"
 
-# debug logging
-print(f"Server starting...", file=sys.stderr)
-print(f"Project root: {PROJECT_ROOT}", file=sys.stderr)
-print(f"Database path: {DB_PATH}", file=sys.stderr)
-print(f"Database exists: {DB_PATH.exists()}", file=sys.stderr)
+# Log to file instead of stderr
+logger.info(f"Server starting")
+logger.info(f"Project root: {PROJECT_ROOT}")
+logger.info(f"Database path: {DB_PATH}")
+logger.info(f"Database exists: {DB_PATH.exists()}")
 
-# Import prediction functions - these should be in boxing_prediction.py
+# Import prediction functions
 try:
     sys.path.insert(0, str(PROJECT_ROOT))
     from mcp_servers.boxing_prediction import (
@@ -41,16 +50,16 @@ try:
         analyze_title_fight_performance
     )
     PREDICTION_AVAILABLE = True
-    print("Prediction module loaded", file=sys.stderr)
+    logger.info("Prediction module loaded")
 except ImportError as e:
     PREDICTION_AVAILABLE = False
-    print(f"Warning: boxing_prediction.py not found ({e}), advanced tools disabled", file=sys.stderr)
+    logger.warning(f"Prediction module not found: {e}")
 
 
 def get_db_connection():
     """Get a database connection."""
     conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row  # Return rows as dicts
+    conn.row_factory = sqlite3.Row
     return conn
 
 
@@ -100,7 +109,7 @@ async def get_fighter_stats(name: str) -> Dict[str, Any]:
     """, (fighter['id'],))
     titles = [dict(t) for t in cursor.fetchall()]
     
-    # Get notable wins (wins against fighters with > 30 wins)
+    # Get notable wins
     cursor.execute("""
         SELECT f2.name as opponent, fi.date, fi.method, fi.round
         FROM fights fi
@@ -122,7 +131,7 @@ async def get_fighter_stats(name: str) -> Dict[str, Any]:
     
     conn.close()
     
-    # Age
+    # Calculate age
     age = None
     if fighter['birth_date']:
         try:
@@ -131,12 +140,11 @@ async def get_fighter_stats(name: str) -> Dict[str, Any]:
         except:
             pass
     
-    # Career length
+    # Calculate career length
     career_length = None
     if fighter['debut_date']:
         try:
-            # Handle both "YYYY" and "YYYY-MM-DD" formats
-            if len(fighter['debut_date']) == 4:  # Year only
+            if len(fighter['debut_date']) == 4:
                 debut = datetime(int(fighter['debut_date']), 1, 1)
             else:
                 debut = datetime.strptime(fighter['debut_date'], "%Y-%m-%d")
@@ -171,17 +179,7 @@ async def get_fighter_stats(name: str) -> Dict[str, Any]:
 
 
 async def compare_fighters(fighter1: str, fighter2: str) -> Dict[str, Any]:
-    """
-    Compare two fighters statistically.
-    
-    Args:
-        fighter1: First fighter's name
-        fighter2: Second fighter's name
-    
-    Returns:
-        Comparison analysis with advantages for each fighter
-    """
-    # Stats for both fighters
+    """Compare two fighters statistically."""
     stats1 = await get_fighter_stats(fighter1)
     stats2 = await get_fighter_stats(fighter2)
     
@@ -235,7 +233,7 @@ async def compare_fighters(fighter1: str, fighter2: str) -> Dict[str, Any]:
     elif titles2 > titles1:
         advantages2.append(f"More championship experience ({titles2} titles vs {titles1} titles)")
     
-    # Determine statistical favorite
+    # Determine favorite
     score1 = len(advantages1)
     score2 = len(advantages2)
     
@@ -267,17 +265,7 @@ async def search_fighters(
     weight_class: Optional[str] = None,
     active_only: bool = False
 ) -> List[Dict[str, Any]]:
-    """
-    Search for fighters by name or criteria.
-    
-    Args:
-        query: Search query (name or partial name)
-        weight_class: Filter by weight class (optional)
-        active_only: Only return active fighters (optional)
-    
-    Returns:
-        List of matching fighters
-    """
+    """Search for fighters by name or criteria."""
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -316,16 +304,7 @@ async def search_fighters(
 
 
 async def fighter_career_timeline(name: str) -> Dict[str, Any]:
-    """
-    Get career timeline and milestones for a fighter.
-    
-    Args:
-        name: Fighter's name
-    
-    Returns:
-        Career timeline with key moments
-    """
-    # Get fighter stats first
+    """Get career timeline and milestones for a fighter."""
     stats = await get_fighter_stats(name)
     if "error" in stats:
         return stats
@@ -333,7 +312,6 @@ async def fighter_career_timeline(name: str) -> Dict[str, Any]:
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Get fighter ID
     cursor.execute("SELECT id, debut_date FROM fighters WHERE LOWER(name) LIKE LOWER(?)", (f"%{name}%",))
     fighter = cursor.fetchone()
     
@@ -344,13 +322,10 @@ async def fighter_career_timeline(name: str) -> Dict[str, Any]:
     fighter_id = fighter['id']
     debut_date = fighter['debut_date']
     
-    # Get all fights chronologically
+    # Get all fights
     cursor.execute("""
         SELECT 
-            f.date,
-            f.method,
-            f.round,
-            f.title_fight,
+            f.date, f.method, f.round, f.title_fight,
             CASE 
                 WHEN f.fighter1_id = ? THEN f2.name 
                 ELSE f1.name 
@@ -369,7 +344,7 @@ async def fighter_career_timeline(name: str) -> Dict[str, Any]:
     
     fights = [dict(f) for f in cursor.fetchall()]
     
-    # Get title reigns
+    # Get titles
     cursor.execute("""
         SELECT title_name, won_date, lost_date, defenses_count
         FROM titles
@@ -383,7 +358,6 @@ async def fighter_career_timeline(name: str) -> Dict[str, Any]:
     # Build milestones
     milestones = []
     
-    # Debut
     if debut_date:
         milestones.append({
             "date": debut_date,
@@ -391,7 +365,6 @@ async def fighter_career_timeline(name: str) -> Dict[str, Any]:
             "significance": "Start of professional career"
         })
     
-    # First title win
     if titles:
         first_title = titles[0]
         milestones.append({
@@ -400,7 +373,6 @@ async def fighter_career_timeline(name: str) -> Dict[str, Any]:
             "significance": "First world championship"
         })
     
-    # Notable fights (title fights, KO wins)
     for fight in fights:
         if fight['title_fight'] and fight['result'] == 'Win':
             milestones.append({
@@ -413,8 +385,7 @@ async def fighter_career_timeline(name: str) -> Dict[str, Any]:
     career_span = None
     if debut_date and fights:
         try:
-            # Handle both "YYYY" and "YYYY-MM-DD" formats
-            if len(debut_date) == 4:  # Year only
+            if len(debut_date) == 4:
                 start = datetime(int(debut_date), 1, 1)
             else:
                 start = datetime.strptime(debut_date, "%Y-%m-%d")
@@ -429,7 +400,7 @@ async def fighter_career_timeline(name: str) -> Dict[str, Any]:
         except:
             pass
     
-    # Year by year stats
+    # Year by year
     year_stats = {}
     for fight in fights:
         year = fight['date'][:4]
@@ -447,7 +418,7 @@ async def fighter_career_timeline(name: str) -> Dict[str, Any]:
         "fighter": stats['name'],
         "career_span": career_span,
         "total_fights": len(fights),
-        "milestones": sorted(milestones, key=lambda x: x['date'])[:10],  # Top 10 milestones
+        "milestones": sorted(milestones, key=lambda x: x['date'])[:10],
         "year_by_year": [
             {"year": year, **stats}
             for year, stats in sorted(year_stats.items())
@@ -460,40 +431,23 @@ async def upcoming_fights(
     date_range: str = "30d",
     weight_class: Optional[str] = None
 ) -> List[Dict[str, Any]]:
-    """
-    Get upcoming scheduled fights from the database.
-    
-    Args:
-        date_range: Range like "7d", "30d", "3m"
-        weight_class: Filter by weight class (optional)
-    
-    Returns:
-        List of upcoming fights
-    """
+    """Get upcoming scheduled fights."""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Parse date range
     days_map = {"7d": 7, "30d": 30, "60d": 60, "90d": 90, "3m": 90, "6m": 180}
     days = days_map.get(date_range, 30)
     cutoff_date = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
     
-    # Build query
     query = """
         SELECT 
-            f.date,
-            f1.name as fighter1,
-            f2.name as fighter2,
-            f.title_fight,
-            f.weight_class,
-            f.location,
-            f.status
+            f.date, f1.name as fighter1, f2.name as fighter2,
+            f.title_fight, f.weight_class, f.location, f.status
         FROM fights f
         JOIN fighters f1 ON f.fighter1_id = f1.id
         JOIN fighters f2 ON f.fighter2_id = f2.id
         WHERE f.status = 'NOT_STARTED'
-        AND f.date <= ?
-        AND f.date >= date('now')
+        AND f.date <= ? AND f.date >= date('now')
     """
     
     params = [cutoff_date]
@@ -506,7 +460,6 @@ async def upcoming_fights(
     
     cursor.execute(query, params)
     fights = cursor.fetchall()
-    
     conn.close()
     
     return [
@@ -559,14 +512,8 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "fighter1": {
-                        "type": "string",
-                        "description": "First fighter's name"
-                    },
-                    "fighter2": {
-                        "type": "string",
-                        "description": "Second fighter's name"
-                    }
+                    "fighter1": {"type": "string", "description": "First fighter's name"},
+                    "fighter2": {"type": "string", "description": "Second fighter's name"}
                 },
                 "required": ["fighter1", "fighter2"]
             }
@@ -581,20 +528,9 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "Search query (name or partial name)",
-                        "default": ""
-                    },
-                    "weight_class": {
-                        "type": "string",
-                        "description": "Filter by weight class (optional)"
-                    },
-                    "active_only": {
-                        "type": "boolean",
-                        "description": "Only return active fighters",
-                        "default": False
-                    }
+                    "query": {"type": "string", "description": "Search query", "default": ""},
+                    "weight_class": {"type": "string", "description": "Filter by weight class"},
+                    "active_only": {"type": "boolean", "description": "Only return active fighters", "default": False}
                 }
             }
         ),
@@ -602,39 +538,24 @@ async def list_tools() -> list[Tool]:
             name="fighter_career_timeline",
             description=(
                 "Get complete career history and timeline for a fighter including "
-                "debut, titles, milestones, and year-by-year statistics. Use when "
-                "the user wants a career overview or progression analysis."
+                "debut, titles, milestones, and year-by-year statistics."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Fighter's name"
-                    }
+                    "name": {"type": "string", "description": "Fighter's name"}
                 },
                 "required": ["name"]
             }
         ),
         Tool(
             name="upcoming_fights",
-            description=(
-                "Get upcoming scheduled boxing matches with details. Filter by "
-                "date range and weight class. Use when the user asks about future "
-                "fights or schedules."
-            ),
+            description="Get upcoming scheduled boxing matches with details.",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "date_range": {
-                        "type": "string",
-                        "description": "Date range like '7d', '30d', '3m'",
-                        "default": "30d"
-                    },
-                    "weight_class": {
-                        "type": "string",
-                        "description": "Filter by weight class (optional)"
-                    }
+                    "date_range": {"type": "string", "description": "Date range like '7d', '30d', '3m'", "default": "30d"},
+                    "weight_class": {"type": "string", "description": "Filter by weight class"}
                 }
             }
         ),
@@ -721,10 +642,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         else:
             result = {"error": f"Unknown tool: {name}"}
         
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2)
-        )]
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
     
     except Exception as e:
         import traceback
@@ -741,25 +659,19 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
 
 async def main():
     """Run the MCP server."""
-    # Check if db exists
     if not DB_PATH.exists():
-        print(f"ERROR: Database not found at {DB_PATH}", file=sys.stderr)
-        print(f"Searched at: {DB_PATH.absolute()}", file=sys.stderr)
-        print("Please ensure data/boxing_data.db is in your repository", file=sys.stderr)
+        logger.error(f"Database not found at {DB_PATH}")
         sys.exit(1)
     
-    print(f"Database found at {DB_PATH}", file=sys.stderr)
-    print("Starting server...", file=sys.stderr)
+    logger.info(f"Database found at {DB_PATH}")
+    logger.info("Starting server")
     
-    # Run server
     try:
         async with stdio_server() as (read_stream, write_stream):
-            print("Server running", file=sys.stderr)
+            logger.info("Server running")
             await app.run(read_stream, write_stream, app.create_initialization_options())
     except Exception as e:
-        print(f"ERROR running server: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc(file=sys.stderr)
+        logger.error(f"Server error: {e}", exc_info=True)
         sys.exit(1)
 
 
@@ -767,7 +679,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except Exception as e:
-        print(f"FATAL ERROR: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc(file=sys.stderr)
+        logger.error(f"Fatal error: {e}", exc_info=True)
         sys.exit(1)
