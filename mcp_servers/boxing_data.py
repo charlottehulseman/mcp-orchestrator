@@ -1,233 +1,113 @@
 #!/usr/bin/env python3
 """
-Boxing Analytics MCP Server - RAILWAY DIAGNOSTIC
-Logs to stderr (Railway can see it) and never exits
+ULTRA MINIMAL TEST - Just imports, no logic
 """
-
-import asyncio
-import json
-import sqlite3
 import sys
-import os
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+print("STEP 1: Script started", file=sys.stderr, flush=True)
 
-def log(msg):
-    """Log to stderr so Railway can see it."""
-    print(f"[DIAGNOSTIC] {msg}", file=sys.stderr, flush=True)
-
-log("=== SERVER STARTING ===")
-log(f"Python version: {sys.version}")
-log(f"Current working directory: {os.getcwd()}")
-log(f"Script location: {__file__}")
-
-# Database path
-PROJECT_ROOT = Path(__file__).parent.parent
-DB_PATH = PROJECT_ROOT / "data" / "boxing_data.db"
-
-log(f"Project root: {PROJECT_ROOT}")
-log(f"Database path: {DB_PATH}")
-log(f"Database absolute: {DB_PATH.absolute()}")
-log(f"Database exists: {DB_PATH.exists()}")
-
-# List project root
 try:
-    items = list(PROJECT_ROOT.iterdir())
-    log(f"Items in project root: {[i.name for i in items]}")
+    import asyncio
+    print("STEP 2: asyncio imported", file=sys.stderr, flush=True)
 except Exception as e:
-    log(f"Error listing project root: {e}")
+    print(f"STEP 2 FAILED: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
-# Check data directory
-data_dir = PROJECT_ROOT / "data"
-log(f"Data directory exists: {data_dir.exists()}")
-if data_dir.exists():
-    try:
-        files = list(data_dir.iterdir())
-        log(f"Files in data/: {[f.name for f in files]}")
-    except Exception as e:
-        log(f"Error listing data/: {e}")
-
-# Try prediction import
-PREDICTION_AVAILABLE = False
 try:
-    sys.path.insert(0, str(PROJECT_ROOT))
-    log(f"Added to sys.path: {PROJECT_ROOT}")
-    
-    from mcp_servers.boxing_prediction import (
-        analyze_career_trajectory,
-        compare_common_opponents,
-        analyze_title_fight_performance
-    )
-    PREDICTION_AVAILABLE = True
-    log("✓ Prediction module loaded")
-except ImportError as e:
-    log(f"⚠ Prediction module failed: {e}")
+    import json
+    print("STEP 3: json imported", file=sys.stderr, flush=True)
 except Exception as e:
-    log(f"⚠ Unexpected error loading prediction: {e}")
+    print(f"STEP 3 FAILED: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
-log(f"Prediction available: {PREDICTION_AVAILABLE}")
+try:
+    import sqlite3
+    print("STEP 4: sqlite3 imported", file=sys.stderr, flush=True)
+except Exception as e:
+    print(f"STEP 4 FAILED: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
+try:
+    from pathlib import Path
+    print("STEP 5: pathlib imported", file=sys.stderr, flush=True)
+except Exception as e:
+    print(f"STEP 5 FAILED: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
-def get_db_connection():
-    """Get a database connection."""
-    if not DB_PATH.exists():
-        raise FileNotFoundError(f"Database not found at {DB_PATH}")
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
-    return conn
+try:
+    from mcp.server import Server
+    print("STEP 6: mcp.server imported", file=sys.stderr, flush=True)
+except Exception as e:
+    print(f"STEP 6 FAILED: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
+try:
+    from mcp.server.stdio import stdio_server
+    print("STEP 7: mcp.server.stdio imported", file=sys.stderr, flush=True)
+except Exception as e:
+    print(f"STEP 7 FAILED: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
-def format_record(wins: int, losses: int, draws: int) -> str:
-    """Format a fighter's record as W-L-D string."""
-    return f"{wins}-{losses}-{draws}"
+try:
+    from mcp.types import Tool, TextContent
+    print("STEP 8: mcp.types imported", file=sys.stderr, flush=True)
+except Exception as e:
+    print(f"STEP 8 FAILED: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
+print("STEP 9: All imports successful!", file=sys.stderr, flush=True)
 
-async def get_fighter_stats(name: str) -> Dict[str, Any]:
-    """Get comprehensive statistics for a fighter."""
-    log(f"get_fighter_stats called for: {name}")
+# Check file system
+try:
+    PROJECT_ROOT = Path(__file__).parent.parent
+    print(f"STEP 10: Project root: {PROJECT_ROOT}", file=sys.stderr, flush=True)
     
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT * FROM fighters 
-            WHERE LOWER(name) LIKE LOWER(?)
-            ORDER BY 
-                CASE WHEN LOWER(name) = LOWER(?) THEN 0 ELSE 1 END,
-                record_wins DESC
-            LIMIT 1
-        """, (f"%{name}%", name))
-        
-        fighter = cursor.fetchone()
-        
-        if not fighter:
-            conn.close()
-            return {
-                "error": f"Fighter '{name}' not found",
-                "suggestion": "Try searching with a different spelling"
-            }
-        
-        conn.close()
-        
-        return {
-            "name": fighter['name'],
-            "nickname": fighter['nickname'],
-            "nationality": fighter['nationality'],
-            "weight_class": fighter['weight_class'],
-            "record": format_record(fighter['record_wins'], fighter['record_losses'], fighter['record_draws']),
-        }
-    except Exception as e:
-        log(f"Error in get_fighter_stats: {e}")
-        return {"error": str(e)}
+    DB_PATH = PROJECT_ROOT / "data" / "boxing_data.db"
+    print(f"STEP 11: DB path: {DB_PATH}", file=sys.stderr, flush=True)
+    print(f"STEP 12: DB exists: {DB_PATH.exists()}", file=sys.stderr, flush=True)
+    
+except Exception as e:
+    print(f"STEP 10-12 FAILED: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
-
-app = Server("boxing-analytics")
-
+# Create minimal server
+print("STEP 13: Creating server", file=sys.stderr, flush=True)
+app = Server("test-server")
 
 @app.list_tools()
-async def list_tools() -> list[Tool]:
-    """List available boxing analytics tools."""
-    log("list_tools() called")
-    
-    tools = [
+async def list_tools():
+    print("STEP 14: list_tools called", file=sys.stderr, flush=True)
+    return [
         Tool(
-            name="get_fighter_stats",
-            description="Get statistics for a boxer (RAILWAY DIAGNOSTIC VERSION)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string", "description": "Fighter's name"}
-                },
-                "required": ["name"]
-            }
-        ),
+            name="test_tool",
+            description="Test tool",
+            inputSchema={"type": "object", "properties": {}}
+        )
     ]
-    
-    # Add prediction tools if available
-    if PREDICTION_AVAILABLE:
-        tools.extend([
-            Tool(
-                name="analyze_career_trajectory",
-                description="Analyze fighter's career trajectory",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string", "description": "Fighter name"},
-                        "window": {"type": "integer", "description": "Rolling window size", "default": 5}
-                    },
-                    "required": ["name"]
-                }
-            ),
-        ])
-    
-    log(f"Returning {len(tools)} tools")
-    return tools
-
 
 @app.call_tool()
-async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    """Execute a boxing analytics tool."""
-    log(f"call_tool: {name} with {arguments}")
-    
-    try:
-        if name == "get_fighter_stats":
-            result = await get_fighter_stats(arguments["name"])
-        elif PREDICTION_AVAILABLE and name == "analyze_career_trajectory":
-            result = await analyze_career_trajectory(
-                arguments["name"],
-                arguments.get("window", 5)
-            )
-        else:
-            result = {"error": f"Unknown tool: {name}"}
-        
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
-    
-    except Exception as e:
-        log(f"Error in call_tool: {e}")
-        return [TextContent(
-            type="text",
-            text=json.dumps({"error": str(e), "tool": name}, indent=2)
-        )]
-
+async def call_tool(name: str, arguments: dict):
+    print(f"STEP 15: call_tool called: {name}", file=sys.stderr, flush=True)
+    return [TextContent(type="text", text='{"status": "ok"}')]
 
 async def main():
-    """Run the MCP server."""
-    log("main() starting")
-    
-    # Check database BEFORE starting server
-    if not DB_PATH.exists():
-        log(f"ERROR: Database not found at {DB_PATH}")
-        log(f"Absolute path: {DB_PATH.absolute()}")
-        log(f"CWD: {os.getcwd()}")
-        # Don't exit - let it try to start anyway
-    else:
-        log(f"✓ Database found: {DB_PATH.stat().st_size} bytes")
-    
+    print("STEP 16: main() started", file=sys.stderr, flush=True)
     try:
-        log("Starting stdio_server...")
         async with stdio_server() as (read_stream, write_stream):
-            log("✓ stdio_server created")
-            log("Running app.run()...")
+            print("STEP 17: stdio_server created", file=sys.stderr, flush=True)
             await app.run(read_stream, write_stream, app.create_initialization_options())
-            log("app.run() completed")
+            print("STEP 18: app.run completed", file=sys.stderr, flush=True)
     except Exception as e:
-        log(f"ERROR in main(): {e}")
+        print(f"STEP 16-18 FAILED: {e}", file=sys.stderr, flush=True)
         import traceback
-        log(f"Traceback: {traceback.format_exc()}")
+        print(traceback.format_exc(), file=sys.stderr, flush=True)
         raise
 
-
 if __name__ == "__main__":
-    log("=== SCRIPT ENTRY POINT ===")
+    print("STEP 19: Entry point", file=sys.stderr, flush=True)
     try:
         asyncio.run(main())
     except Exception as e:
-        log(f"FATAL ERROR: {e}")
+        print(f"STEP 19 FAILED: {e}", file=sys.stderr, flush=True)
         import traceback
-        log(f"Traceback: {traceback.format_exc()}")
-        raise
+        print(traceback.format_exc(), file=sys.stderr, flush=True)
+        sys.exit(1)
