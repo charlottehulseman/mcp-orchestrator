@@ -9,6 +9,7 @@ import asyncio
 import time
 import base64
 from pathlib import Path
+import os
 import sys
 from dotenv import load_dotenv
 
