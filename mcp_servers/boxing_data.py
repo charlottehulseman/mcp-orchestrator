@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 # Load env variables
 load_dotenv()
 
-# CRITICAL FIX: Use absolute path to database
+# Db
 PROJECT_ROOT = Path(__file__).parent.parent
 DB_PATH = PROJECT_ROOT / "data" / "boxing_data.db"
 
@@ -32,7 +32,7 @@ print(f"Project root: {PROJECT_ROOT}", file=sys.stderr)
 print(f"Database path: {DB_PATH}", file=sys.stderr)
 print(f"Database exists: {DB_PATH.exists()}", file=sys.stderr)
 
-# Import prediction functions - these should be in boxing_prediction.py
+# boxing prediction
 try:
     sys.path.insert(0, str(PROJECT_ROOT))
     from mcp_servers.boxing_prediction import (
@@ -50,7 +50,7 @@ except ImportError as e:
 def get_db_connection():
     """Get a database connection."""
     conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row  # Return rows as dicts
+    conn.row_factory = sqlite3.Row 
     return conn
 
 
@@ -72,7 +72,7 @@ async def get_fighter_stats(name: str) -> Dict[str, Any]:
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Search for fighter (case-insensitive & partial match)
+    # Search for fighter
     cursor.execute("""
         SELECT * FROM fighters 
         WHERE LOWER(name) LIKE LOWER(?)
