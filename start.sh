@@ -14,9 +14,7 @@ fi
 
 echo "Database found: $(du -h data/boxing_data.db)"
 
-# Railway sets PORT - we MUST use it
-# If PORT is not set, default to 8501
-STREAMLIT_PORT="${PORT:-8501}"
+STREAMLIT_PORT="${PORT:-8080}"
 
 echo "Starting Streamlit on port $STREAMLIT_PORT..."
 
