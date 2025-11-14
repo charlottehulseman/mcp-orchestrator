@@ -2,7 +2,6 @@
 """
 Boxing Intelligence Platform - Main Integration
 Complete multi-server MCP system with LangChain orchestration and observability
-NOW WITH REDDIT SOCIAL MEDIA ANALYSIS!
 """
 
 import asyncio
@@ -29,7 +28,7 @@ except ImportError:
 
 async def setup_boxing_platform():
     """
-    Initialize the Boxing Intelligence Platform with ALL FOUR servers.
+    Initialize the Boxing Intelligence Platform with all three servers.
     
     Returns:
         tuple: (client, tools, agent) ready for queries
@@ -42,7 +41,7 @@ async def setup_boxing_platform():
     # Get project root
     project_root = Path(__file__).parent
     
-    # Configure all FOUR boxing servers - ALL USING STDIO
+    # Configure all three boxing servers - ALL USING STDIO
     server_config = {
         "boxing_analytics": {
             "transport": "stdio",
@@ -58,11 +57,6 @@ async def setup_boxing_platform():
             "transport": "stdio",
             "command": "python",
             "args": [str(project_root / "mcp_servers" / "boxing_news.py")],
-        },
-        "reddit_social": {
-            "transport": "stdio",
-            "command": "python",
-            "args": [str(project_root / "mcp_servers" / "reddit.py")],
         }
     }
     
@@ -70,7 +64,6 @@ async def setup_boxing_platform():
     print("   Boxing Analytics (stdio)")
     print("   Betting & Odds (stdio)")
     print("   Fight News (stdio)")
-    print("   Reddit Social Media (stdio) ✨ NEW")
     print()
     
     # Create MCP client
@@ -85,14 +78,13 @@ async def setup_boxing_platform():
     print("📊 Available Tools:")
     
     # Group tools by server (approximate by tool name patterns)
-    analytics_tools = [t for t in tools if any(x in t.name for x in ['fighter', 'compare', 'career', 'upcoming', 'trajectory', 'opponent', 'title'])]
+    analytics_tools = [t for t in tools if any(x in t.name for x in ['fighter', 'compare', 'career', 'upcoming'])]
     odds_tools = [t for t in tools if any(x in t.name for x in ['odds', 'betting', 'predict', 'value', 'trend'])]
-    news_tools = [t for t in tools if any(x in t.name for x in ['news', 'hype', 'prediction', 'press']) and 'reddit' not in t.name.lower()]
-    reddit_tools = [t for t in tools if any(x in t.name for x in ['boxing_posts', 'hot_boxing', 'fighter_mentions', 'fighter_buzz', 'community_sentiment'])]
+    news_tools = [t for t in tools if any(x in t.name for x in ['news', 'social', 'hype', 'prediction', 'press'])]
     
     if analytics_tools:
         print(f"\n   Boxing Analytics ({len(analytics_tools)} tools):")
-        for tool in analytics_tools[:4]:
+        for tool in analytics_tools[:3]:
             print(f"      • {tool.name}")
     
     if odds_tools:
@@ -105,14 +97,7 @@ async def setup_boxing_platform():
         for tool in news_tools[:3]:
             print(f"      • {tool.name}")
     
-    if reddit_tools:
-        print(f"\n   Reddit Social Media ({len(reddit_tools)} tools) ✨ NEW:")
-        for tool in reddit_tools:
-            print(f"      • {tool.name}")
-    
-    remaining = len(tools) - len(analytics_tools) - len(odds_tools) - len(news_tools) - len(reddit_tools)
-    if remaining > 0:
-        print(f"\n   ... and {remaining} more")
+    print(f"\n   ... and {len(tools) - len(analytics_tools) - len(odds_tools) - len(news_tools)} more")
     
     # Create Claude agent with all tools
     print("\n🤖 Creating Claude Sonnet 4.5 agent with all tools...")
@@ -193,103 +178,28 @@ async def demo_simple_query(agent, tools):
     print("-" * 70)
 
 
-async def demo_reddit_social_query(agent, tools):
-    """Run a Reddit social media analysis query."""
-    print("\n" + "="*70)
-    print("DEMO 2: Reddit Social Media Analysis ✨ NEW")
-    print("="*70)
-    
-    query = """
-What's the Reddit community sentiment on Tyson Fury? 
-
-1. Search for recent posts about him
-2. Compare his Reddit buzz to Oleksandr Usyk
-3. What's the overall community sentiment?
-
-Give me a comprehensive social media intelligence report.
-    """
-    
-    print(f"\nQuery: Reddit sentiment analysis")
-    print("="*70)
-    print(query.strip())
-    print("="*70)
-    print("\nAgent analyzing Reddit data...\n")
-    
-    # Track query
-    if OBSERVABILITY_AVAILABLE:
-        monitor = get_monitor()
-        monitor.log_query(query)
-    
-    # Create tool name -> tool mapping for execution
-    tool_map = {tool.name: tool for tool in tools}
-    
-    messages = [HumanMessage(content=query)]
-    
-    # Keep invoking until no more tool calls
-    while True:
-        response = await agent.ainvoke(messages)
-        messages.append(response)
-        
-        # Check if there are tool calls
-        if hasattr(response, 'tool_calls') and response.tool_calls:
-            # Execute tool calls
-            for tool_call in response.tool_calls:
-                tool_name = tool_call['name']
-                tool_args = tool_call['args']
-                
-                # Time tool execution
-                start_time = time.time()
-                
-                # Get the tool and execute it
-                tool = tool_map.get(tool_name)
-                if tool:
-                    result = await tool.ainvoke(tool_args)
-                else:
-                    result = f"Error: Tool {tool_name} not found"
-                
-                # Track tool call performance
-                if OBSERVABILITY_AVAILABLE:
-                    duration_ms = (time.time() - start_time) * 1000
-                    monitor.log_tool_call(tool_name, duration_ms)
-                
-                # Add tool result to messages
-                from langchain_core.messages import ToolMessage
-                messages.append(ToolMessage(
-                    content=str(result),
-                    tool_call_id=tool_call['id']
-                ))
-        else:
-            break
-    
-    print("Reddit Intelligence Report:")
-    print("="*70)
-    print(response.content)
-    print("="*70)
-
-
 async def demo_multi_server_query(agent, tools):
-    """Run a complex multi-server query using ALL FOUR servers."""
+    """Run a complex multi-server query."""
     print("\n" + "="*70)
-    print("DEMO 3: Multi-Server Query (All Four Servers)")
+    print("DEMO 2: Multi-Server Query (All Three Servers)")
     print("="*70)
     
     query = """
-Complete intelligence analysis for Tyson Fury vs Anthony Joshua:
+Analyze the Tyson Fury vs Anthony Joshua fight for a betting decision:
 
-1. Compare their fighter statistics and career trajectories
-2. Check current betting odds and value opportunities
-3. What's the news media saying about each fighter?
-4. What's the Reddit community sentiment and buzz comparison?
-5. Give me a comprehensive decision recommendation
+1. Compare their fighter statistics and recent performance
+2. Check the current betting odds and calculate if there's value
+3. What does the media and experts say about each fighter?
+4. Give me a comprehensive betting recommendation
 
-Use ALL available intelligence sources across all four servers.
+Use all available intelligence sources.
     """
     
-    print(f"\nQuery: Complete multi-source fight analysis")
+    print(f"\nQuery: Multi-server fight analysis")
     print("="*70)
     print(query.strip())
     print("="*70)
-    print("\nAgent orchestrating across ALL FOUR servers...\n")
+    print("\nAgent orchestrating across all servers...\n")
     
     # Track query
     if OBSERVABILITY_AVAILABLE:
@@ -338,7 +248,7 @@ Use ALL available intelligence sources across all four servers.
             # No more tool calls, we have the final answer
             break
     
-    print("Complete Intelligence Report:")
+    print("Intelligence Report:")
     print("="*70)
     print(response.content)
     print("="*70)
@@ -349,13 +259,12 @@ async def interactive_mode(agent, tools):
     print("\n" + "="*70)
     print("Interactive mode:")
     print("="*70)
-    print("\nAsk questions using all 4 servers.")
+    print("\nAsk questions using all 3 servers.")
     print("Type 'quit' or 'exit' to stop.\n")
     print("Example queries:")
     print("  • 'Should I bet on Canelo vs Benavidez?'")
-    print("  • 'Compare Reddit sentiment: Fury vs Usyk'")
-    print("  • 'What are people saying about Crawford on Reddit?'")
-    print("  • 'Find value bets with social media confirmation'")
+    print("  • 'Compare the media hype of Fury and Joshua'")
+    print("  • 'Find value bets in upcoming fights'")
     print()
     
     # Create tool name -> tool mapping for execution
@@ -429,7 +338,7 @@ async def interactive_mode(agent, tools):
             print()
             
         except KeyboardInterrupt:
-            print("\n\nThanks for using the Boxing Intelligence Platform!")
+            print("\n\n Thanks for using the Boxing Intelligence Platform!")
             # Show performance summary if observability is available
             if OBSERVABILITY_AVAILABLE:
                 monitor = get_monitor()
@@ -465,19 +374,7 @@ async def main():
     if os.getenv("ODDS_API_KEY"):
         print("   ✅ ODDS_API_KEY set (live betting data)")
     else:
-        print("   ⚠️  ODDS_API_KEY not set (limited betting features)")
-    
-    # Check REDDIT credentials (optional)
-    if os.getenv("REDDIT_CLIENT_ID") and os.getenv("REDDIT_CLIENT_SECRET"):
-        print("   ✅ REDDIT_CLIENT_ID/SECRET set (live social media data)")
-    else:
-        print("   ⚠️  Reddit API not set (see REDDIT_SETUP.md)")
-    
-    # Check NEWS_API_KEY (optional)
-    if os.getenv("NEWS_API_KEY"):
-        print("   ✅ NEWS_API_KEY set (live news data)")
-    else:
-        print("   ⚠️  NEWS_API_KEY not set (limited news features)")
+        print("   ⚠️  ODDS_API_KEY not set (using demo data)")
     
     # Check boxing database
     if Path("data/boxing_data.db").exists():
@@ -499,36 +396,30 @@ async def main():
         traceback.print_exc()
         print("\nMake sure:")
         print("  1. All server files exist in mcp_servers/")
-        print("  2. Dependencies installed: pip install -r requirements.txt")
+        print("  2. Dependencies installed: pip install langchain-mcp-adapters langchain-anthropic")
         print("  3. Database exists: python scripts/init_boxing_db.py")
-        print("  4. Reddit setup complete: see REDDIT_SETUP.md")
+        print("  4. HTTP server is running: python mcp_servers/boxing_odds.py")
         return
     
     # Run demos or interactive mode
     print("Choose mode:")
-    print("  1. Run all demos (simple + reddit + multi-server)")
+    print("  1. Run demos (simple + multi-server queries)")
     print("  2. Interactive mode (ask your own questions)")
-    print("  3. Reddit demo only")
-    print("  4. Multi-server demo only")
+    print("  3. Quick test (one multi-server query)")
     
-    choice = input("\nEnter choice (1/2/3/4) or press Enter for all demos: ").strip()
+    choice = input("\nEnter choice (1/2/3) or press Enter for demos: ").strip()
     
     if choice == "2":
         await interactive_mode(agent, tools)
     elif choice == "3":
-        await demo_reddit_social_query(agent, tools)
-        if OBSERVABILITY_AVAILABLE:
-            monitor = get_monitor()
-            monitor.print_summary()
-    elif choice == "4":
         await demo_multi_server_query(agent, tools)
+        # Show performance summary if observability is available
         if OBSERVABILITY_AVAILABLE:
             monitor = get_monitor()
             monitor.print_summary()
     else:
-        # Run all demos
+        # Run both demos
         await demo_simple_query(agent, tools)
-        await demo_reddit_social_query(agent, tools)
         await demo_multi_server_query(agent, tools)
         
         # Show performance summary if observability is available

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Boxing Betting & Odds MCP Server
+Boxing Betting & Odds MCP Server - REAL DATA ONLY
 
-Provides sports betting data and odds analysis for boxing matches from Odds API.
-
+Provides sports betting data and odds analysis for boxing matches.
+Requires ODDS_API_KEY - throws errors if not available.
+NO DEMO DATA - REAL PROJECT ONLY.
 """
 
 import asyncio
@@ -16,30 +17,38 @@ from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
-# Odds API config
+
+# Odds API configuration - REQUIRED
 ODDS_API_KEY = os.getenv("ODDS_API_KEY")
 
 # Initialize MCP server
 app = Server("boxing-odds")
 
+
 def validate_api_key():
     """Validate that API key is set - REQUIRED for all operations."""
     if not ODDS_API_KEY:
         raise ValueError(
-            "ODDS_API_KEY environment variable is required."
+            "ODDS_API_KEY environment variable is REQUIRED. "
+            "This server does not provide demo data. "
+            "Get your API key from: https://the-odds-api.com/ "
+            "Then set it with: export ODDS_API_KEY='your_key'"
         )
+
 
 async def fetch_live_odds(fighter1: str, fighter2: str) -> dict:
     """
-    Fetch real odds from The Odds API.
-    Throws error if API key not set.
+    Fetch REAL odds from The Odds API.
+    NO FAKE DATA - throws error if API key not set.
     """
     validate_api_key()
     
     import httpx
     
+    # The Odds API endpoint for boxing
     url = "https://api.the-odds-api.com/v4/sports/boxing_boxing/odds/"
     
     params = {
@@ -56,7 +65,7 @@ async def fetch_live_odds(fighter1: str, fighter2: str) -> dict:
             
             data = response.json()
             
-            # Find specific fight
+            # Find the specific fight
             for event in data:
                 if fighter1.lower() in event.get('home_team', '').lower() or \
                    fighter2.lower() in event.get('home_team', '').lower():
@@ -77,7 +86,7 @@ async def list_tools() -> list[Tool]:
     """List available betting tools - ALL REQUIRE ODDS_API_KEY when called."""
     
     # Don't validate at startup - validate when tools are called
-    # This allows the server to start without the API key
+    # This allows the server to start even without the API key
     
     return [
         Tool(
@@ -146,7 +155,7 @@ async def list_tools() -> list[Tool]:
 
 @app.call_tool()
 async def call_tool(name: str, arguments: Any) -> list[TextContent]:
-    """Handle tool calls, all require real API data."""
+    """Handle tool calls - ALL require real API data."""
     
     try:
         # Validate API key for ALL tools
@@ -168,8 +177,8 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             fighter2 = arguments["fighter2"]
             timeframe = arguments.get("timeframe", "7d")
             
-            # require historical API data
-            # for now fetch current
+            # This would require historical API data
+            # For now, fetch current and explain limitation
             odds_data = await fetch_live_odds(fighter1, fighter2)
             
             return [TextContent(
@@ -187,7 +196,8 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             
             odds_data = await fetch_live_odds(fighter_name, opponent)
             
-            # Calc implied probability and value
+            # Calculate implied probability and value
+            # This is real calculation based on real odds
             bookmakers = odds_data.get('bookmakers', [])
             if bookmakers:
                 odds = bookmakers[0].get('markets', [{}])[0].get('outcomes', [])
@@ -229,7 +239,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             
             odds_data = await fetch_live_odds(fighter1, fighter2)
             
-            # Prediction
+            # Real prediction based on real odds
             bookmakers = odds_data.get('bookmakers', [])
             if bookmakers:
                 prediction = {
@@ -251,7 +261,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             raise ValueError(f"Unknown tool: {name}")
     
     except ValueError as e:
-        # Return error
+        # Return the actual error to the user
         return [TextContent(
             type="text",
             text=json.dumps({

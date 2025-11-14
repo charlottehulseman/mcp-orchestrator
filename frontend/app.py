@@ -304,8 +304,8 @@ def inject_main_css():
         [data-testid="stToolbar"],
         .stAppToolbar {
             background-color: #191C20 !important;
-            color: #000000 !important;
-            border-bottom: 1px solid #191C20
+            color: #ffffff !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1) !important;
         }
 
         /* Ensure toolbar icons and menu dots are visible on black */
@@ -341,7 +341,6 @@ def initialize_platform():
         "boxing_analytics": {"transport": "stdio", "command": "python", "args": [str(project_root / "mcp_servers" / "boxing_data.py")]},
         "betting_odds": {"transport": "stdio", "command": "python", "args": [str(project_root / "mcp_servers" / "boxing_odds.py")]},
         "fight_news": {"transport": "stdio", "command": "python", "args": [str(project_root / "mcp_servers" / "boxing_news.py")]},
-        "boxing_prediction": {"transport": "stdio", "command": "python", "args": [str(project_root / "mcp_servers" / "boxing_prediction.py")]},
         "reddit_social": {"transport": "stdio", "command": "python", "args": [str(project_root / "mcp_servers" / "reddit.py")]},
     }
     client = MultiServerMCPClient(server_config)
@@ -359,7 +358,6 @@ def display_server_status():
         ("Analytics", "Fighter stats & history", "active"),
         ("Betting", "Odds & value analysis", "active"),
         ("News", "Media coverage", "active"),
-        ("Prediction", "Trajectory & outcome prediction", "active"),
         ("Social", "Reddit sentiment", "active"),
     ]
     for name, desc, status in servers:
@@ -601,7 +599,7 @@ def show_main_app():
     st.markdown(
         '''<div class="footer">
             Boxonomics | Powered by LangChain, MCP &amp; Claude Sonnet 4<br>
-            5 Specialized Servers | 25+ Intelligence Tools
+            4 Specialized Servers | 25+ Intelligence Tools
         </div>''',
         unsafe_allow_html=True,
     )

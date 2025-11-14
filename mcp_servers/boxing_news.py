@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-Boxing News & Media MCP Server
-Provides fight news and media coverage for boxing.
+Boxing News & Media MCP Server - REAL DATA ONLY
 
+Provides fight news and media coverage for boxing.
+Requires NEWS_API_KEY for real articles.
+NO DEMO/FAKE DATA - REAL PROJECT ONLY.
 """
 
 import asyncio
@@ -19,8 +21,10 @@ from dotenv import load_dotenv
 # Load env variables
 load_dotenv()
 
+
 # News API config
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+
 
 def validate_news_api_key():
     """Validate that NEWS API key is set - REQUIRED for news operations."""
@@ -31,6 +35,7 @@ def validate_news_api_key():
             "Get your API key from: https://newsapi.org/ "
             "Then set it with: export NEWS_API_KEY='your_key'"
         )
+
 
 async def get_fight_news(
     fighter_name: Optional[str] = None,
@@ -132,12 +137,12 @@ async def compare_fighter_hype(
     days_back: int = 7
 ) -> Dict[str, Any]:
     """
-    Compare media attention based on real news article counts.
-    Do not fabricate any data, only use actual news articles and news article counts.
+    Compare media attention based on REAL news article counts.
+    NO FAKE DATA - only counts actual news articles.
     """
     validate_news_api_key()
     
-    # Get news for both fighters
+    # Get real news for both fighters
     news1 = await get_fight_news(fighter1, days_back, max_results=50)
     news2 = await get_fight_news(fighter2, days_back, max_results=50)
     
@@ -152,7 +157,7 @@ async def compare_fighter_hype(
             "suggestion": "Try searching with full fighter names or check spelling"
         }
     
-    # Determine leader based on article counts
+    # Determine leader based on REAL article counts
     if count1 > count2:
         leader = fighter1
         diff = count1 - count2
@@ -255,8 +260,8 @@ app = Server("boxing-news")
 async def list_tools() -> list[Tool]:
     """List available boxing news tools - REQUIRES NEWS_API_KEY when called."""
     
-    # Doesn't validate at server startup, validates when tools are called
-    # This allows the server to start without the API key
+    # Don't validate at startup - validate when tools are called
+    # This allows the server to start even without the API key
     
     return [
         Tool(
@@ -316,8 +321,8 @@ async def list_tools() -> list[Tool]:
         Tool(
             name="compare_fighter_hype",
             description=(
-                "Compare media attention between fighters based on real news article counts. "
-                "Requires NEWS_API_KEY."
+                "Compare media attention between fighters based on REAL news article counts. "
+                "Requires NEWS_API_KEY (checked when called). Uses actual article counts, no fake metrics."
             ),
             inputSchema={
                 "type": "object",
@@ -392,7 +397,7 @@ async def list_tools() -> list[Tool]:
 
 @app.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    """Execute a boxing news tool and require real data or return errors."""
+    """Execute a boxing news tool - ALL require real data or return errors."""
     try:
         if name == "get_fight_news":
             result = await get_fight_news(
@@ -432,13 +437,13 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         )]
     
     except ValueError as e:
-        # Return error
+        # Return clear error to user
         return [TextContent(
             type="text",
             text=json.dumps({
                 "error": str(e),
                 "tool": name,
-                "message": "No data found."
+                "message": "This server requires real API data. No demo/fake data is provided."
             }, indent=2)
         )]
     except Exception as e:

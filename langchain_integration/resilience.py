@@ -64,7 +64,7 @@ async def retry_with_backoff(
             last_exception = e
             
             if attempt == config.max_attempts:
-                # last attempt
+                # Last attempt, give up
                 raise
             
             print(f"⚠️  Attempt {attempt}/{config.max_attempts} failed: {e}")
@@ -121,7 +121,7 @@ class CircuitBreaker:
     def is_open(self) -> bool:
         """Check if circuit is open (failing fast)."""
         if self.state == "OPEN":
-            # Check if should try recovery
+            # Check if we should try recovery
             if time.time() - self.last_failure_time >= self.recovery_timeout:
                 self.state = "HALF_OPEN"
                 self.success_count = 0
@@ -147,10 +147,10 @@ class CircuitBreaker:
         
         if self.state == "HALF_OPEN":
             self.state = "OPEN"
-            print(" Circuit breaker: HALF_OPEN → OPEN (recovery failed)")
+            print("❌ Circuit breaker: HALF_OPEN → OPEN (recovery failed)")
         elif self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
-            print(f" Circuit breaker: CLOSED → OPEN ({self.failure_count} failures)")
+            print(f"❌ Circuit breaker: CLOSED → OPEN ({self.failure_count} failures)")
     
     async def call(self, func: Callable[..., T], *args, **kwargs) -> T:
         """
@@ -240,8 +240,10 @@ async def call_with_timeout(
     """
     return await asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
 
+
 # Global circuit breakers for each server
 _circuit_breakers = {}
+
 
 def get_circuit_breaker(server_name: str) -> CircuitBreaker:
     """Get or create a circuit breaker for a server."""
