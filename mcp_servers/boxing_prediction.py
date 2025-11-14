@@ -1,43 +1,31 @@
 #!/usr/bin/env python3
 """
 ADVANCED BOXING ANALYSIS TOOLS
-
-These tools leverage the enhanced database with complete fight histories,
-title records, and deep data to provide sophisticated analytics.
-
+Clean version with absolute paths for deployment
 """
 
 import sqlite3
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
+from pathlib import Path
 import statistics
 
-DB_PATH = "data/boxing_data.db"
+# CRITICAL: Use absolute path
+DB_PATH = Path(__file__).parent.parent / "data" / "boxing_data.db"
 
 
 def get_db_connection():
     """Get database connection."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
     return conn
 
 
 async def analyze_career_trajectory(name: str, window: int = 5) -> Dict[str, Any]:
-    """
-    Analyze fighter's career trajectory using rolling window analysis.
-    Shows if fighter is improving, declining, or at peak.
-    
-    Args:
-        name: Fighter's name
-        window: Number of fights for rolling average (default 5)
-    
-    Returns:
-        Career trajectory analysis with trend indicators
-    """
+    """Analyze fighter's career trajectory using rolling window analysis."""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Get fighter
     cursor.execute("SELECT id FROM fighters WHERE LOWER(name) LIKE LOWER(?)", (f"%{name}%",))
     fighter = cursor.fetchone()
     if not fighter:
@@ -45,12 +33,9 @@ async def analyze_career_trajectory(name: str, window: int = 5) -> Dict[str, Any
     
     fighter_id = fighter['id']
     
-    # Get all fights chronologically
     cursor.execute("""
         SELECT 
-            f.date,
-            f.method,
-            f.round,
+            f.date, f.method, f.round,
             CASE 
                 WHEN f.winner_id = ? THEN 'Win'
                 WHEN f.winner_id IS NULL THEN 'Draw'
@@ -84,29 +69,14 @@ async def analyze_career_trajectory(name: str, window: int = 5) -> Dict[str, Any
             "error": f"Not enough fights for trajectory analysis (need at least {window})"
         }
     
-    # Calculate rolling statistics
     rolling_win_rate = []
-    rolling_ko_rate = []
-    rolling_opponent_quality = []
     
     for i in range(window - 1, len(fights)):
         window_fights = fights[i - window + 1:i + 1]
-        
-        # Win rate in window
         wins = sum(1 for f in window_fights if f['result'] == 'Win')
         win_rate = wins / len(window_fights)
         rolling_win_rate.append(win_rate)
-        
-        # KO rate in window
-        kos = sum(1 for f in window_fights if f['result'] == 'Win' and f['method'] in ['KO', 'TKO', 'RTD'])
-        ko_rate = kos / len(window_fights)
-        rolling_ko_rate.append(ko_rate)
-        
-        # Average opponent quality (by wins)
-        avg_opp_wins = statistics.mean([f['opponent_wins'] or 0 for f in window_fights])
-        rolling_opponent_quality.append(avg_opp_wins)
     
-    # Determine trend
     recent_win_rate = statistics.mean(rolling_win_rate[-3:]) if len(rolling_win_rate) >= 3 else rolling_win_rate[-1]
     early_win_rate = statistics.mean(rolling_win_rate[:3]) if len(rolling_win_rate) >= 3 else rolling_win_rate[0]
     
@@ -128,7 +98,6 @@ async def analyze_career_trajectory(name: str, window: int = 5) -> Dict[str, Any
         trend = "Stable"
         trend_strength = "Consistent"
     
-    # Career phases
     total = len(fights)
     early_phase = fights[:total//3]
     mid_phase = fights[total//3:2*total//3]
@@ -177,21 +146,10 @@ async def analyze_career_trajectory(name: str, window: int = 5) -> Dict[str, Any
 
 
 async def compare_common_opponents(fighter1: str, fighter2: str) -> Dict[str, Any]:
-    """
-    Find and compare performance against common opponents.
-    Critical for indirect fighter comparison.
-    
-    Args:
-        fighter1: First fighter's name
-        fighter2: Second fighter's name
-    
-    Returns:
-        Detailed comparison of performance vs shared opponents
-    """
+    """Compare performance against common opponents."""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Get both fighters
     cursor.execute("SELECT id, name FROM fighters WHERE LOWER(name) LIKE LOWER(?)", (f"%{fighter1}%",))
     f1 = cursor.fetchone()
     
@@ -204,7 +162,6 @@ async def compare_common_opponents(fighter1: str, fighter2: str) -> Dict[str, An
     f1_id, f1_name = f1['id'], f1['name']
     f2_id, f2_name = f2['id'], f2['name']
     
-    # Find common opponents
     cursor.execute("""
         SELECT DISTINCT
             CASE 
@@ -248,7 +205,6 @@ async def compare_common_opponents(fighter1: str, fighter2: str) -> Dict[str, An
             "analysis": "No common opponents found - direct statistical comparison recommended"
         }
     
-    # Get details for each common opponent
     comparisons = []
     f1_score = 0
     f2_score = 0
@@ -257,7 +213,6 @@ async def compare_common_opponents(fighter1: str, fighter2: str) -> Dict[str, An
         opp_name = opponent['opponent_name']
         opp_id = opponent['opponent_id']
         
-        # Get fighter1's result vs this opponent
         cursor.execute("""
             SELECT 
                 f.date, f.method, f.round,
@@ -274,7 +229,6 @@ async def compare_common_opponents(fighter1: str, fighter2: str) -> Dict[str, An
         """, (f1_id, f1_id, opp_id, f1_id, opp_id))
         f1_result = dict(cursor.fetchone())
         
-        # Get fighter2's result vs this opponent
         cursor.execute("""
             SELECT 
                 f.date, f.method, f.round,
@@ -291,34 +245,20 @@ async def compare_common_opponents(fighter1: str, fighter2: str) -> Dict[str, An
         """, (f2_id, f2_id, opp_id, f2_id, opp_id))
         f2_result = dict(cursor.fetchone())
         
-        # Compare results
         comparison = {
             "opponent": opp_name,
             f"{f1_name}_result": f1_result['result'],
             f"{f1_name}_method": f1_result['method'],
-            f"{f1_name}_round": f1_result['round'],
             f"{f2_name}_result": f2_result['result'],
             f"{f2_name}_method": f2_result['method'],
-            f"{f2_name}_round": f2_result['round'],
         }
         
-        # Score the comparison
         if f1_result['result'] == 'Win' and f2_result['result'] != 'Win':
             f1_score += 1
             comparison['advantage'] = f1_name
         elif f2_result['result'] == 'Win' and f1_result['result'] != 'Win':
             f2_score += 1
             comparison['advantage'] = f2_name
-        elif f1_result['result'] == 'Win' and f2_result['result'] == 'Win':
-            # Both won - compare methods
-            if f1_result['method'] in ['KO', 'TKO'] and f2_result['method'] not in ['KO', 'TKO']:
-                f1_score += 0.5
-                comparison['advantage'] = f"{f1_name} (more impressive win)"
-            elif f2_result['method'] in ['KO', 'TKO'] and f1_result['method'] not in ['KO', 'TKO']:
-                f2_score += 0.5
-                comparison['advantage'] = f"{f2_name} (more impressive win)"
-            else:
-                comparison['advantage'] = "Even"
         else:
             comparison['advantage'] = "Even"
         
@@ -326,7 +266,6 @@ async def compare_common_opponents(fighter1: str, fighter2: str) -> Dict[str, An
     
     conn.close()
     
-    # Determine overall advantage
     if f1_score > f2_score:
         overall_advantage = f1_name
         confidence = min(0.6 + (f1_score - f2_score) * 0.1, 0.9)
@@ -341,10 +280,7 @@ async def compare_common_opponents(fighter1: str, fighter2: str) -> Dict[str, An
         "fighter1": f1_name,
         "fighter2": f2_name,
         "common_opponents_count": len(common_opponents),
-        "score": {
-            f1_name: f1_score,
-            f2_name: f2_score
-        },
+        "score": {f1_name: f1_score, f2_name: f2_score},
         "overall_advantage": overall_advantage,
         "confidence": round(confidence, 2),
         "detailed_comparisons": comparisons,
@@ -353,20 +289,10 @@ async def compare_common_opponents(fighter1: str, fighter2: str) -> Dict[str, An
 
 
 async def analyze_title_fight_performance(name: str) -> Dict[str, Any]:
-    """
-    Analyze fighter's performance specifically in championship fights.
-    Shows if fighter "rises to the occasion" in big moments.
-    
-    Args:
-        name: Fighter's name
-    
-    Returns:
-        Title fight performance analysis
-    """
+    """Analyze championship fight performance vs regular fights."""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Get fighter
     cursor.execute("SELECT id, name FROM fighters WHERE LOWER(name) LIKE LOWER(?)", (f"%{name}%",))
     fighter = cursor.fetchone()
     if not fighter:
@@ -374,12 +300,9 @@ async def analyze_title_fight_performance(name: str) -> Dict[str, Any]:
     
     fighter_id, fighter_name = fighter['id'], fighter['name']
     
-    # Get all title fights
     cursor.execute("""
         SELECT 
-            f.date,
-            f.method,
-            f.round,
+            f.date, f.method, f.round,
             CASE 
                 WHEN f.winner_id = ? THEN 'Win'
                 WHEN f.winner_id IS NULL THEN 'Draw'
@@ -400,7 +323,6 @@ async def analyze_title_fight_performance(name: str) -> Dict[str, Any]:
     
     title_fights = [dict(f) for f in cursor.fetchall()]
     
-    # Get all non-title fights for comparison
     cursor.execute("""
         SELECT 
             CASE 
@@ -417,7 +339,6 @@ async def analyze_title_fight_performance(name: str) -> Dict[str, Any]:
     
     non_title_fights = [dict(f) for f in cursor.fetchall()]
     
-    # Get title records
     cursor.execute("""
         SELECT title_name, organization, won_date, lost_date, defenses_count
         FROM titles
@@ -426,7 +347,6 @@ async def analyze_title_fight_performance(name: str) -> Dict[str, Any]:
     """, (fighter_id,))
     
     titles = [dict(t) for t in cursor.fetchall()]
-    
     conn.close()
     
     if not title_fights:
@@ -436,24 +356,18 @@ async def analyze_title_fight_performance(name: str) -> Dict[str, Any]:
             "analysis": "No title fight experience in database"
         }
     
-    # Calculate title fight stats
     title_wins = sum(1 for f in title_fights if f['result'] == 'Win')
     title_losses = sum(1 for f in title_fights if f['result'] == 'Loss')
     title_draws = sum(1 for f in title_fights if f['result'] == 'Draw')
     
     title_win_rate = title_wins / len(title_fights)
-    title_ko_rate = sum(1 for f in title_fights if f['result'] == 'Win' and f['method'] in ['KO', 'TKO', 'RTD']) / len(title_fights)
     
-    # Calculate non-title stats for comparison
     if non_title_fights:
         non_title_wins = sum(1 for f in non_title_fights if f['result'] == 'Win')
         non_title_win_rate = non_title_wins / len(non_title_fights)
-        non_title_ko_rate = sum(1 for f in non_title_fights if f['result'] == 'Win' and f['method'] in ['KO', 'TKO', 'RTD']) / len(non_title_fights)
     else:
         non_title_win_rate = 0
-        non_title_ko_rate = 0
     
-    # Determine if fighter elevates in title fights
     performance_comparison = title_win_rate - non_title_win_rate
     
     if performance_comparison > 0.1:
@@ -481,12 +395,10 @@ async def analyze_title_fight_performance(name: str) -> Dict[str, Any]:
             "losses": title_losses,
             "draws": title_draws,
             "win_rate": round(title_win_rate * 100, 1),
-            "ko_rate": round(title_ko_rate * 100, 1)
         },
         "non_title_statistics": {
             "total_fights": len(non_title_fights),
             "win_rate": round(non_title_win_rate * 100, 1),
-            "ko_rate": round(non_title_ko_rate * 100, 1)
         },
         "performance_comparison": {
             "rises_to_occasion": rises_to_occasion,
@@ -506,58 +418,3 @@ async def analyze_title_fight_performance(name: str) -> Dict[str, Any]:
         } for f in title_fights],
         "analysis": f"{fighter_name} performs {occasion_strength.lower()} in title fights compared to regular fights, with a {title_win_rate:.0%} win rate in championship bouts."
     }
-
-
-# Tool definitions for MCP server
-ADVANCED_TOOLS = [
-    {
-        "name": "analyze_career_trajectory",
-        "description": "Analyze a fighter's career trajectory to see if they're improving, declining, or at peak. Uses rolling window analysis of complete fight history.",
-        "function": analyze_career_trajectory
-    },
-    {
-        "name": "compare_common_opponents",
-        "description": "Find shared opponents between two fighters and compare their performance. Critical for indirect matchup analysis.",
-        "function": compare_common_opponents
-    },
-    {
-        "name": "analyze_title_fight_performance",
-        "description": "Analyze how a fighter performs specifically in championship fights vs regular fights. Shows if they rise to big occasions.",
-        "function": analyze_title_fight_performance
-    }
-]
-
-
-if __name__ == "__main__":
-    """Test the advanced tools."""
-    import asyncio
-    
-    print("="*70)
-    print("TESTING ADVANCED ANALYSIS TOOLS")
-    print("="*70)
-    
-    async def test():
-        # Test 1: Career Trajectory
-        print("\n📈 Test 1: Career Trajectory Analysis")
-        print("-"*70)
-        result = await analyze_career_trajectory("Tyson Fury")
-        print(f"Fighter: {result.get('fighter')}")
-        print(f"Trajectory: {result.get('current_trajectory', {}).get('trend')}")
-        print(f"Recent Win Rate: {result.get('current_trajectory', {}).get('recent_win_rate')}%")
-        
-        # Test 2: Common Opponents
-        print("\n🥊 Test 2: Common Opponents Comparison")
-        print("-"*70)
-        result = await compare_common_opponents("Tyson Fury", "Deontay Wilder")
-        print(f"Common opponents: {result.get('common_opponents_count')}")
-        print(f"Advantage: {result.get('overall_advantage')}")
-        
-        # Test 3: Title Fight Performance
-        print("\n🏆 Test 3: Title Fight Performance")
-        print("-"*70)
-        result = await analyze_title_fight_performance("Canelo Alvarez")
-        print(f"Title fight record: {result.get('title_fight_record')}")
-        print(f"Rises to occasion: {result.get('performance_comparison', {}).get('rises_to_occasion')}")
-        print(f"Total defenses: {result.get('championship_pedigree', {}).get('total_defenses')}")
-    
-    asyncio.run(test())
