@@ -329,19 +329,57 @@ def inject_main_css():
 # -------------------- Platform Init --------------------
 @st.cache_resource
 def initialize_platform():
+    """Initialize platform with environment variables passed to subprocesses."""
     project_root = Path(__file__).parent.parent
-    server_config = {
-        "boxing_analytics": {"transport": "stdio", "command": "python", "args": [str(project_root / "mcp_servers" / "boxing_data.py")]},
-        "betting_odds": {"transport": "stdio", "command": "python", "args": [str(project_root / "mcp_servers" / "boxing_odds.py")]},
-        "fight_news": {"transport": "stdio", "command": "python", "args": [str(project_root / "mcp_servers" / "boxing_news.py")]},
-        "reddit_social": {"transport": "stdio", "command": "python", "args": [str(project_root / "mcp_servers" / "reddit.py")]},
+    
+    # Build environment dict to pass to subprocesses
+    env_vars = {
+        "ANTHROPIC_API_KEY": os.getenv("ANTHROPIC_API_KEY", ""),
+        "ODDS_API_KEY": os.getenv("ODDS_API_KEY", ""),
+        "NEWS_API_KEY": os.getenv("NEWS_API_KEY", ""),
+        "REDDIT_CLIENT_ID": os.getenv("REDDIT_CLIENT_ID", ""),
+        "REDDIT_CLIENT_SECRET": os.getenv("REDDIT_CLIENT_SECRET", ""),
+        "REDDIT_USER_AGENT": os.getenv("REDDIT_USER_AGENT", "boxonomics/1.0"),
+        "PYTHONPATH": str(project_root),
     }
+    
+    server_config = {
+        "boxing_analytics": {
+            "transport": "stdio",
+            "command": "python",
+            "args": [str(project_root / "mcp_servers" / "boxing_data.py")],
+            "env": env_vars,  # Pass environment variables
+        },
+        "betting_odds": {
+            "transport": "stdio",
+            "command": "python",
+            "args": [str(project_root / "mcp_servers" / "boxing_odds.py")],
+            "env": env_vars,  # Pass environment variables
+        },
+        "fight_news": {
+            "transport": "stdio",
+            "command": "python",
+            "args": [str(project_root / "mcp_servers" / "boxing_news.py")],
+            "env": env_vars,  # Pass environment variables
+        },
+        "reddit_social": {
+            "transport": "stdio",
+            "command": "python",
+            "args": [str(project_root / "mcp_servers" / "reddit.py")],
+            "env": env_vars,  # Pass environment variables
+        },
+    }
+    
     client = MultiServerMCPClient(server_config)
-    async def async_init(): return await client.get_tools()
+    
+    async def async_init(): 
+        return await client.get_tools()
+    
     tools = asyncio.run(async_init())
     llm = ChatAnthropic(model="claude-sonnet-4-20250514", temperature=0)
     agent = llm.bind_tools(tools)
     tool_map = {t.name: t for t in tools}
+    
     return agent, tools, tool_map, client
 
 
@@ -585,7 +623,7 @@ def show_main_app():
             st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)  # end .chat-area
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if not show_hero:
         st.markdown("---")
