@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """
-ULTRA MINIMAL TEST - Just imports, no logic
+Boxing Analytics MCP Server
+
+Provides comprehensive boxing data and analysis tools via MCP.
+Uses stdio transport.
 """
+
+import asyncio
+import json
+import sqlite3
 import sys
 import os
 from datetime import datetime, timedelta
@@ -521,40 +528,246 @@ app = Server("boxing-analytics")
 
 
 @app.list_tools()
-async def list_tools():
-    print("STEP 14: list_tools called", file=sys.stderr, flush=True)
-    return [
+async def list_tools() -> list[Tool]:
+    """List available boxing analytics tools."""
+    tools = [
         Tool(
-            name="test_tool",
-            description="Test tool",
-            inputSchema={"type": "object", "properties": {}}
-        )
+            name="get_fighter_stats",
+            description=(
+                "Get comprehensive statistics for a boxer including record, KO rate, "
+                "titles, physical stats, and notable wins. Use this when the user "
+                "asks about a specific fighter or wants detailed fighter information."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Fighter's name (partial match supported)"
+                    }
+                },
+                "required": ["name"]
+            }
+        ),
+        Tool(
+            name="compare_fighters",
+            description=(
+                "Compare two fighters statistically with advantages for each and a "
+                "prediction. Use this when the user wants a head-to-head analysis "
+                "or asks 'who would win' between two fighters."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "fighter1": {
+                        "type": "string",
+                        "description": "First fighter's name"
+                    },
+                    "fighter2": {
+                        "type": "string",
+                        "description": "Second fighter's name"
+                    }
+                },
+                "required": ["fighter1", "fighter2"]
+            }
+        ),
+        Tool(
+            name="search_fighters",
+            description=(
+                "Search for fighters by name, weight class, or active status. "
+                "Use when the user's query is ambiguous or they want to discover "
+                "fighters matching certain criteria."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search query (name or partial name)",
+                        "default": ""
+                    },
+                    "weight_class": {
+                        "type": "string",
+                        "description": "Filter by weight class (optional)"
+                    },
+                    "active_only": {
+                        "type": "boolean",
+                        "description": "Only return active fighters",
+                        "default": False
+                    }
+                }
+            }
+        ),
+        Tool(
+            name="fighter_career_timeline",
+            description=(
+                "Get complete career history and timeline for a fighter including "
+                "debut, titles, milestones, and year-by-year statistics. Use when "
+                "the user wants a career overview or progression analysis."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Fighter's name"
+                    }
+                },
+                "required": ["name"]
+            }
+        ),
+        Tool(
+            name="upcoming_fights",
+            description=(
+                "Get upcoming scheduled boxing matches with details. Filter by "
+                "date range and weight class. Use when the user asks about future "
+                "fights or schedules."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "date_range": {
+                        "type": "string",
+                        "description": "Date range like '7d', '30d', '3m'",
+                        "default": "30d"
+                    },
+                    "weight_class": {
+                        "type": "string",
+                        "description": "Filter by weight class (optional)"
+                    }
+                }
+            }
+        ),
     ]
+    
+    # Add advanced tools if available
+    if PREDICTION_AVAILABLE:
+        tools.extend([
+            Tool(
+                name="analyze_career_trajectory",
+                description="Analyze fighter's career trajectory (improving/declining/peak)",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Fighter name"},
+                        "window": {"type": "integer", "description": "Rolling window size", "default": 5}
+                    },
+                    "required": ["name"]
+                }
+            ),
+            Tool(
+                name="compare_common_opponents",
+                description="Compare performance vs shared opponents",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "fighter1": {"type": "string"},
+                        "fighter2": {"type": "string"}
+                    },
+                    "required": ["fighter1", "fighter2"]
+                }
+            ),
+            Tool(
+                name="analyze_title_fight_performance",
+                description="Analyze championship fight performance vs regular fights",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Fighter name"}
+                    },
+                    "required": ["name"]
+                }
+            )
+        ])
+    
+    return tools
+
 
 @app.call_tool()
-async def call_tool(name: str, arguments: dict):
-    print(f"STEP 15: call_tool called: {name}", file=sys.stderr, flush=True)
-    return [TextContent(type="text", text='{"status": "ok"}')]
+async def call_tool(name: str, arguments: dict) -> list[TextContent]:
+    """Execute a boxing analytics tool."""
+    try:
+        if name == "get_fighter_stats":
+            result = await get_fighter_stats(arguments["name"])
+        elif name == "compare_fighters":
+            result = await compare_fighters(arguments["fighter1"], arguments["fighter2"])
+        elif name == "search_fighters":
+            result = await search_fighters(
+                arguments.get("query", ""),
+                arguments.get("weight_class"),
+                arguments.get("active_only", False)
+            )
+        elif name == "fighter_career_timeline":
+            result = await fighter_career_timeline(arguments["name"])
+        elif name == "upcoming_fights":
+            result = await upcoming_fights(
+                arguments.get("date_range", "30d"),
+                arguments.get("weight_class")
+            )
+        elif PREDICTION_AVAILABLE and name == "analyze_career_trajectory":
+            result = await analyze_career_trajectory(
+                arguments["name"],
+                arguments.get("window", 5)
+            )
+        elif PREDICTION_AVAILABLE and name == "compare_common_opponents":
+            result = await compare_common_opponents(
+                arguments["fighter1"],
+                arguments["fighter2"]
+            )
+        elif PREDICTION_AVAILABLE and name == "analyze_title_fight_performance":
+            result = await analyze_title_fight_performance(
+                arguments["name"]
+            )
+        else:
+            result = {"error": f"Unknown tool: {name}"}
+        
+        return [TextContent(
+            type="text",
+            text=json.dumps(result, indent=2)
+        )]
+    
+    except Exception as e:
+        import traceback
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+                "tool": name,
+                "arguments": arguments
+            }, indent=2)
+        )]
+
 
 async def main():
-    print("STEP 16: main() started", file=sys.stderr, flush=True)
+    """Run the MCP server."""
+    # Check if db exists
+    if not DB_PATH.exists():
+        print(f"ERROR: Database not found at {DB_PATH}", file=sys.stderr)
+        print(f"Searched at: {DB_PATH.absolute()}", file=sys.stderr)
+        print("Please ensure data/boxing_data.db is in your repository", file=sys.stderr)
+        sys.exit(1)
+    
+    print(f"Database found at {DB_PATH}", file=sys.stderr)
+    print("Starting server...", file=sys.stderr)
+    
+    # Run server
     try:
         async with stdio_server() as (read_stream, write_stream):
-            print("STEP 17: stdio_server created", file=sys.stderr, flush=True)
+            print("Server running", file=sys.stderr)
             await app.run(read_stream, write_stream, app.create_initialization_options())
-            print("STEP 18: app.run completed", file=sys.stderr, flush=True)
     except Exception as e:
-        print(f"STEP 16-18 FAILED: {e}", file=sys.stderr, flush=True)
+        print(f"ERROR running server: {e}", file=sys.stderr)
         import traceback
-        print(traceback.format_exc(), file=sys.stderr, flush=True)
-        raise
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    print("STEP 19: Entry point", file=sys.stderr, flush=True)
     try:
         asyncio.run(main())
     except Exception as e:
-        print(f"STEP 19 FAILED: {e}", file=sys.stderr, flush=True)
+        print(f"FATAL ERROR: {e}", file=sys.stderr)
         import traceback
-        print(traceback.format_exc(), file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
         sys.exit(1)
