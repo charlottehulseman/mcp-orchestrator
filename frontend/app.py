@@ -300,7 +300,6 @@ def inject_main_css():
         div[data-testid="stExpander"] label,
         div[data-testid="stExpander"] button { color:#FFF !important; }
         
-        /* Override Streamlit's white top toolbar */
         [data-testid="stToolbar"],
         .stAppToolbar {
             background-color: #191C20 !important;
@@ -317,12 +316,6 @@ def inject_main_css():
             fill: #ffffff !important;
         }
 
-        /* Optional: match your app gradient instead of solid black */
-        .stAppToolbar {
-            background: linear-gradient(135deg, #0A0E27 0%, #1A1F3A 100%) !important;
-        }
-
-        /* Hide any shadow/margin Streamlit adds */
         header, [data-testid="stHeader"] {
             box-shadow: none !important;
             background: transparent !important;
